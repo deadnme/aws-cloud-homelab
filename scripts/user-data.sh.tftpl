@@ -1,0 +1,103 @@
+#!/bin/bash
+# First-boot script for the Harbor Point app servers (EC2 "user data").
+# Runs once, as root, when an instance is first launched.
+# Output is logged to /var/log/cloud-init-output.log on the instance.
+#
+# This is a Terraform template: Terraform fills in region, app_py and dockerfile
+# (see compute.tf). A literal dollar-brace in shell must be written as $${...}.
+set -euxo pipefail
+
+# ---------------------------------------------------------------- packages
+dnf install -y nginx python3-pip amazon-cloudwatch-agent
+# PostgreSQL client for the backup script (doc 07). Must match the RDS major version.
+dnf install -y postgresql16 || echo "WARNING: postgresql16 client not installed"
+
+# ---------------------------------------------------------------- the app
+useradd --system --no-create-home --shell /sbin/nologin harbor || true
+mkdir -p /opt/harbor
+python3 -m venv /opt/harbor/venv
+/opt/harbor/venv/bin/pip install --quiet boto3 'psycopg[binary]'
+
+cat > /opt/harbor/app.py <<'HARBOR_EOF'
+${app_py}
+HARBOR_EOF
+
+cat > /opt/harbor/Dockerfile <<'HARBOR_EOF'
+${dockerfile}
+HARBOR_EOF
+
+chown -R root:root /opt/harbor
+chmod 755 /opt/harbor
+chmod 644 /opt/harbor/app.py /opt/harbor/Dockerfile
+
+cat > /etc/systemd/system/harbor-app.service <<'HARBOR_EOF'
+[Unit]
+Description=Harbor Point client portal
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=harbor
+Environment=AWS_DEFAULT_REGION=${region}
+ExecStart=/opt/harbor/venv/bin/python /opt/harbor/app.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+HARBOR_EOF
+
+# ---------------------------------------------------------------- nginx
+# nginx listens on port 80 (IPv4 and IPv6) and passes requests to the app on
+# 127.0.0.1:8080. default_server beats the stock server block in nginx.conf,
+# including for "curl localhost", which tries IPv6 (::1) first.
+cat > /etc/nginx/conf.d/harbor.conf <<'HARBOR_EOF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+HARBOR_EOF
+
+# ---------------------------------------------------------------- backup script (doc 07)
+cat > /usr/local/bin/harbor-backup <<'HARBOR_EOF'
+#!/bin/bash
+# Dumps the portal database and uploads it to the S3 backup bucket.
+# Run as root (sudo) so it uses the instance role credentials.
+set -euo pipefail
+export AWS_DEFAULT_REGION=${region}
+
+param() {
+  aws ssm get-parameter --name "$1" --with-decryption --query Parameter.Value --output text
+}
+
+BUCKET=$(param /harbor/backup/bucket)
+export PGHOST=$(param /harbor/db/host)
+export PGDATABASE=$(param /harbor/db/name)
+export PGUSER=$(param /harbor/db/user)
+export PGPASSWORD=$(param /harbor/db/password)
+
+KEY="db/$(hostname -s)-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+pg_dump --no-owner | gzip | aws s3 cp - "s3://$BUCKET/$KEY"
+echo "Uploaded s3://$BUCKET/$KEY"
+HARBOR_EOF
+chmod 755 /usr/local/bin/harbor-backup
+
+# ---------------------------------------------------------------- start everything
+nginx -t
+systemctl daemon-reload
+systemctl enable --now harbor-app nginx
+
+# CloudWatch agent config is created in doc 08. Before that, this step fails
+# harmlessly; after doc 08, new instances pick the config up at boot.
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 -s -c ssm:AmazonCloudWatch-harbor \
+  || echo "CloudWatch agent config not found yet (doc 08)"
+
+echo "Harbor Point bootstrap finished"

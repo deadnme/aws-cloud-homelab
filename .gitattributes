@@ -1,0 +1,7 @@
+# Always check text files out with LF line endings, even on Windows.
+# A CRLF in scripts/user-data.sh.tftpl turns "#!/bin/bash" into "#!/bin/bash\r"
+# and the EC2 first-boot script never runs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.mp4 binary

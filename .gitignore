@@ -1,0 +1,35 @@
+# Your personal working copy of the Terraform files (doc 02)
+lab/
+
+# Terraform state holds resource IDs and can hold secrets. Never commit it.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+plan.out
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+*.tfvars
+!example.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# AWS credentials and keys
+.aws/
+*.pem
+*.key
+.env
+*credentials*.csv
+*accessKeys*.csv
+
+# Health report output (contains the account ID; doc 09)
+report.md
+
+# Python
+__pycache__/
+.venv/
