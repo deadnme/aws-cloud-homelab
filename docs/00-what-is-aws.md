@@ -1,5 +1,7 @@
 # 00 · What is AWS, and what this lab builds
 
+_Guide written with AI assistance; the build, outputs and notes are mine._
+
 > **Goal:** understand the few AWS ideas that every later page depends on: Regions and Availability Zones, the shared responsibility model, how billing works, and which AWS service replaces which part of the Harbor Point AD lab.
 
 ## Why a company does this

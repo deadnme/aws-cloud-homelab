@@ -2,7 +2,7 @@
 
 A hands-on AWS lab aimed at **junior cloud, cloud support and cloud operations roles in the Philippines.** The fictional **Harbor Point Accounting** (the same 20-person firm from my [Windows AD homelab](https://github.com/deadnme/windows-ad-homelab)) moves its client portal from an office server to AWS. I build it with Terraform, run it, break it on purpose, and fix it the way a cloud support engineer would.
 
-> **About this project:** this is a **learning lab**, not production experience. I built it with AI assistance (Claude) as a guided walkthrough. I type and run every command myself, and the docs only show output I actually saw in my own account. Sections marked _"My output"_ are filled in as I complete each module.
+> **About this project:** this is a **learning lab**, not production experience. The guide, Terraform code and scripts were written with AI assistance (Claude). **I'm the one building it:** I set up the AWS account, type and run every command, troubleshoot what breaks, and work the break-fix tickets without looking at the answers. The docs only show output I actually saw in my own account. Sections marked _"My output"_ get filled in as I complete each module.
 
 ## What employers ask for, and where it's covered
 
