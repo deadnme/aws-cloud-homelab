@@ -14,7 +14,7 @@ On AWS, Harbor Point rents servers by the second (OpEx), puts copies of the app 
 
 | Term | What it is | In this lab |
 |---|---|---|
-| **Region** | A geographic area with its own separate copy of most AWS services, e.g. `ap-southeast-1` | **Asia Pacific (Singapore)**, the closest full Region to the Philippines, so latency from Manila is low |
+| **Region** | A geographic area with its own separate copy of most AWS services, e.g. `ap-southeast-1` | **Asia Pacific (Singapore)**: the oldest Region in Southeast Asia, the parent of the Manila Local Zone, and much closer to Manila than N. Virginia (see design decisions D-01) |
 | **Availability Zone (AZ)** | One or more data centres inside a Region, with separate power and networking, linked to the other AZs by fast private fibre | Two AZs, so one AZ can fail and the portal keeps running |
 | **Edge location** | A smaller site used by CloudFront (CDN) and Route 53 (DNS) to serve users nearby | Not used. No domain name in this lab |
 
