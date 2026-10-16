@@ -45,7 +45,9 @@ resource "aws_iam_role_policy_attachment" "app_ssm" {
 }
 
 # The app and the backup script read their settings (database host, password,
-# bucket name) from Parameter Store under /harbor/. Nothing else.
+# bucket name) from Parameter Store under /harbor/. This policy grants
+# nothing more, but AmazonSSMManagedInstanceCore (above) also allows
+# ssm:GetParameter(s) on every parameter (docs/design-decisions.md D-15).
 resource "aws_iam_role_policy" "app_read_params" {
   name = "harbor-read-params"
   role = aws_iam_role.app.id

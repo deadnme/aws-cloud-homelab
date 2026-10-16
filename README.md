@@ -22,28 +22,50 @@ Before building, I reviewed entry-level and junior cloud postings in the Philipp
 
 ## Architecture
 
-```
-                       Internet
-                          │
-              ┌───────────┴───────────┐
-              │ Application Load       │  VPC 10.20.0.0/16, ap-southeast-1 (Singapore)
-              │ Balancer (2 AZs)       │
-              └─────┬─────────────┬────┘
-        public      │  AZ a       │  AZ b
-        subnets ┌───┴────┐    ┌───┴────┐
-                │ EC2    │    │ EC2    │  Auto Scaling group, t4g.micro, Amazon Linux 2023
-                │ nginx  │    │ nginx  │  SG: HTTP from the ALB only. No SSH, no port 22.
-                │ + app  │    │ + app  │  Shell access through SSM Session Manager
-                └───┬────┘    └───┬────┘
-        private     └──────┬──────┘
-        subnets      ┌─────┴──────┐
-                     │ RDS        │  PostgreSQL 16, single-AZ. SG: 5432 from the app SG only
-                     └────────────┘
+```mermaid
+flowchart TB
+    clients(["Clients on the internet"])
+    admin(["Admin: sean.admin + MFA"])
+    email(["Alert email"])
 
-   Parameter Store (/harbor/*: DB settings, SecureString password) ◄── instance role
-   S3 backup bucket (versioned, encrypted, private) ◄── instance role (write db/* only, no delete)
-   CloudWatch agent ──► metrics, nginx logs, 4 alarms ──► SNS email     AWS Budgets $5/month · CloudTrail
+    subgraph region["ap-southeast-1 (Singapore)"]
+        subgraph vpc["VPC 10.20.0.0/16"]
+            igw["Internet gateway"]
+            subgraph public["Public subnets"]
+                alb["Application Load Balancer<br/>HTTP :80 across 2 AZs"]
+                subgraph asg["Auto Scaling group"]
+                    ec2a["EC2 t4g.micro, AZ a<br/>nginx → app.py"]
+                    ec2b["EC2 t4g.micro, AZ b<br/>nginx → app.py"]
+                end
+            end
+            subgraph private["Private subnets"]
+                rds[("RDS PostgreSQL 16<br/>db.t4g.micro, single-AZ")]
+            end
+        end
+        ssm["SSM Parameter Store<br/>/harbor/*, password is a SecureString"]
+        s3[("S3 backup bucket<br/>versioned, encrypted, private")]
+        cw["CloudWatch<br/>metrics, nginx logs, 4 alarms, dashboard"]
+        sns["SNS topic harbor-alerts"]
+        sm["Session Manager"]
+    end
+
+    clients -->|"HTTP :80"| igw --> alb
+    alb -->|"HTTP :80, only from the ALB SG"| asg
+    asg -->|"TCP 5432, only from the app SG"| rds
+    asg -.->|"read /harbor/*"| ssm
+    asg -.->|"put/get db/*, no delete"| s3
+    asg -.->|"agent: memory, disk, nginx logs"| cw
+    cw -->|"alarm"| sns --> email
+    admin -->|"no SSH, no port 22"| sm
+    asg -.->|"SSM agent dials out"| sm
 ```
+
+- **Subnets:** public `10.20.1.0/24` (AZ a) and `10.20.2.0/24` (AZ b) route to the internet gateway. Private `10.20.11.0/24` and `10.20.12.0/24` have no route to the internet.
+- **Lines:** solid lines are network traffic. Dotted lines are AWS API calls made with the instance role, and the Session Manager channel. Those calls leave through the internet gateway, because the lab has no NAT Gateway and no VPC endpoints.
+- **Metrics:** only the disk alarm uses agent data. CPU, unhealthy targets and ALB 5xx come from metrics AWS publishes itself.
+- **Not drawn:** account-level guards set up in doc 01: an AWS Budgets alert ($5/month) and CloudTrail event history.
+
+Why each part is built this way, what else was considered, and what production would change: **[design decisions](docs/design-decisions.md)**.
 
 **Deliberate cost trade-offs** (and what production would do instead):
 
@@ -82,6 +104,7 @@ Each page follows the same layout: **Goal → Why a company does this → What g
 | 11 | [Troubleshooting and lessons](docs/11-troubleshooting-and-lessons.md) | A repeatable method and toolkit; what broke for me | 📝 to run |
 | 12 | [Break-fix tickets](docs/12-break-fix-tickets.md) | Eight faults found and fixed from the ticket alone | 📝 to run |
 | 13 | [Teardown and cost report](docs/13-teardown-and-cost-report.md) | Proving nothing is left; the real total cost | 📝 to run |
+| – | [Design decisions](docs/design-decisions.md) | Why each part is built this way, the alternatives, and what production would change | 📖 read |
 | – | [Glossary](docs/glossary.md) | Every term in one place | 📖 read |
 
 ## Repository layout

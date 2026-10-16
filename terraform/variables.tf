@@ -1,5 +1,5 @@
 variable "region" {
-  description = "AWS Region for every lab resource. Singapore is the closest full Region to the Philippines."
+  description = "AWS Region for every lab resource. Singapore: the oldest Southeast Asia Region and parent of the Manila Local Zone (see docs/design-decisions.md D-01)."
   type        = string
   default     = "ap-southeast-1"
 }
