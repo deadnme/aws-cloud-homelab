@@ -55,6 +55,7 @@ These are **anticipated**, not observed. They're the usual first-run problems wi
 | `/db` says `not configured` | Doc 06 not applied yet, or parameters deleted | `aws ssm get-parameters-by-path --path /harbor --recursive` |
 | RDS create fails with a free-tier backup retention error | Free plan limit | `backup_retention_period = 0` (doc 06) |
 | No alarm emails | SNS subscription not confirmed | Click the confirmation link (doc 08) |
+| Budget email recipient "Inactive"; **Send verification** says no permission for `notifications-contacts:*` | Budgets verifies new recipients since 30 September 2026, and the project SCP denies `notifications-contacts` | Send the alerts through an SNS topic (doc 01, step 5) |
 | `CWAgent` metrics missing | Instances booted before doc 08 | Instance refresh (doc 08) |
 | `AccessDenied` mentioning a service control policy, on a call that worked before | Wrong Region (the project only allows `ap-southeast-2`), or the project is near its spend limit | Check `region` in `~/.aws/config` and `variables.tf`. Check credits and spend in AWS Settings → Billing |
 | An S3 or IAM action the docs say is DENIED works | An extra managed policy is attached to `harbor-app-role` (a project may add one) | `aws iam list-attached-role-policies --role-name harbor-app-role`, then `terraform apply` (doc 04) |

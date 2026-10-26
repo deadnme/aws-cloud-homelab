@@ -40,7 +40,7 @@ AWS now offers a simpler sign-up (**"Sign up for AWS (new)"**). You sign in with
 **AWS Settings** (<https://settings.aws.com>) → **View all projects** → your project → **Overview** → **Additional info**. Write down:
 
 - **Region:** this guide assumes `ap-southeast-2` (Sydney). If yours is `us-east-2` or `eu-north-1`, change every `ap-southeast-2` to your Region: the `region` default in `terraform/variables.tf`, the `region` line of the `harbor` profile in doc 02, the `--region` values in docs 06 and 07, and `AWS_DEFAULT_REGION` in `app/Dockerfile` (doc 10).
-- **Account ID:** the 12-digit number. Doc 02 checks the CLI is signed in to this account.
+- **Account ID (233402379125):** the 12-digit number. Doc 02 checks the CLI is signed in to this account.
 
 Changing your contact address later does **not** move the project to another Region.
 
@@ -64,13 +64,35 @@ Billing works differently from a classic account: payment details, the plan, cre
 **Billing and Cost Management** → **Budgets** → **Create budget**:
 
 1. **Customize (advanced)** → **Cost budget**.
-2. Name `lab-monthly-5usd`, period **Monthly**, budget method **Fixed**, amount **$5.00**, scope **All AWS services**.
+2. Name `lab-monthly-5usd` (type it without backticks: the name can't be changed later), period **Monthly**, budget method **Fixed**, amount **$5.00**, scope **All AWS services**.
 3. Under the advanced options, make sure **Credits** are **not** included in the costs. The goal is for the budget to track real usage *before* credits are applied. If credits are counted, the budget shows about $0 while the credits quietly drain.
 4. Alert thresholds, each emailed to you:
    - **Actual** cost > **20%** of budget ($1)
    - **Actual** cost > **100%** ($5)
    - **Forecasted** cost > **100%**
 5. Create.
+
+#### If the email recipient stays "Inactive"
+
+Since 30 September 2026, Budgets must verify each new email recipient before it sends alerts. In a new-experience project, **Send verification** fails with *"You do not have permission to send verification emails … notifications-contacts:CreateEmailContact …"*. The project's SCP denies every `notifications-contacts` action, so retrying or waiting won't help. Send the alerts through an SNS topic instead. SNS confirms the address with its own email, which the project allows.
+
+1. **SNS** (console Region Sydney) → **Topics** → **Create topic** → **Standard**, name `budget-alerts`.
+2. In **Access policy** → **Advanced**, add this statement to the `Statement` list (use your account ID):
+   ```json
+   {
+     "Sid": "AllowBudgets",
+     "Effect": "Allow",
+     "Principal": { "Service": "budgets.amazonaws.com" },
+     "Action": "SNS:Publish",
+     "Resource": "arn:aws:sns:ap-southeast-2:<account-id>:budget-alerts",
+     "Condition": { "StringEquals": { "aws:SourceAccount": "<account-id>" } }
+   }
+   ```
+3. **Create subscription** → **Email** → your address. Open the "AWS Notification - Subscription Confirmation" email and click the link until the page says **Subscription confirmed!**
+4. **Budgets** → your budget → **Edit** → add the topic ARN to each of the 3 alerts. The inactive email recipient can stay.
+5. Test the email path: topic → **Publish message**. The email arrives within a minute. (Budgets' own permission to publish is only proven when a real alert fires.)
+
+Keep this topic after `terraform destroy`, like the budget. It isn't part of the lab's Terraform, and it costs nothing at this volume.
 
 If the Budgets list already shows a budget you didn't create, don't delete it until you know where it came from (check its name and its alert or action settings).
 
@@ -105,6 +127,7 @@ In the console, click any event and read the **User name** and **Source IP addre
 | No access keys | IAM → Users | No users, or users with no access keys |
 | Plan and credits visible | AWS Settings → Billing | Free Tier, credits balance shown |
 | Budget exists | Billing and Cost Management → Budgets | `lab-monthly-5usd`, 3 alerts |
+| Alerts can reach you | Email recipient **Active**, or SNS → `budget-alerts` → Subscriptions | Active recipient, or a **Confirmed** email subscription on the topic attached to all 3 alerts |
 | Audit trail works | CloudTrail → Event history (Sydney), and the `lookup-events` command in step 7 after doc 02 | Your own events, and `CreateBudget` by your session |
 
 _My result: (add screenshots to `screenshots/01-*.png` after doing this)_
