@@ -4,7 +4,7 @@
 #   public  10.20.1.0/24 (AZ a)   10.20.2.0/24 (AZ b)    route to the internet gateway
 #   private 10.20.11.0/24 (AZ a)  10.20.12.0/24 (AZ b)   no route to the internet at all
 #
-# No NAT Gateway: it costs roughly $40/month in Singapore. Private subnets only
+# No NAT Gateway: it costs roughly $43/month in Sydney. Private subnets only
 # hold the database, which never needs to reach the internet.
 
 data "aws_availability_zones" "available" {

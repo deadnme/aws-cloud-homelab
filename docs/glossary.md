@@ -7,7 +7,9 @@
 | **ARN** | Amazon Resource Name, the unique ID of any AWS resource, e.g. `arn:aws:iam::123456789012:role/harbor-app-role` |
 | **Auto Scaling group (ASG)** | Keeps a set number of instances running, replaces unhealthy ones, scales on load (doc 05) |
 | **Availability Zone (AZ)** | One or more isolated data centres inside a Region (doc 00) |
-| **`aws login`** | AWS CLI command (2.32.0+) that gets short-lived credentials from a console sign-in (doc 02) |
+| **AWS Settings** | The site (settings.aws.com) where a new-experience customer manages projects, billing, credits and team members (doc 01) |
+| **`aws login`** | AWS CLI command (2.32.0+) that gets short-lived credentials from a browser sign-in (doc 02) |
+| **AWS Builder ID** | Your personal AWS profile. In the new AWS experience it owns your projects instead of a root user (doc 01) |
 | **boto3** | The AWS SDK for Python (doc 09) |
 | **CIDR** | Notation for an IP range, e.g. `10.20.0.0/16` = 65,536 addresses (doc 03) |
 | **cloud-init / user data** | The first-boot script mechanism on EC2. Log: `/var/log/cloud-init-output.log` (doc 04) |
@@ -20,7 +22,7 @@
 | **EBS** | Elastic Block Store: the network disks attached to EC2 instances |
 | **EC2** | Elastic Compute Cloud: virtual servers (doc 04) |
 | **ECR / ECS / EKS / Fargate** | Container registry / AWS's container orchestrator / managed Kubernetes / serverless compute for containers (doc 10) |
-| **Free Plan** | New-account plan (since July 2025): credits instead of a bill, for 6 months or until the credits run out (doc 00, 01) |
+| **Free Plan / Free Tier credits** | New-account plan (since July 2025): credits instead of a bill, for 6 months or until the credits run out (doc 00, 01) |
 | **Health check** | The load balancer's regular request (`GET /health`) deciding whether a target gets traffic |
 | **IAM** | Identity and Access Management: users, groups, roles and policies (doc 01, 07) |
 | **IAM role** | An identity that something assumes for temporary credentials, e.g. an EC2 instance (doc 04, 07) |
@@ -34,10 +36,12 @@
 | **NAT Gateway** | Lets private-subnet resources reach the internet outbound. Paid per hour; not used in this lab (doc 03) |
 | **Network ACL (NACL)** | Stateless, ordered allow/deny rules on a subnet (doc 03, BF-3) |
 | **Parameter Store** | Part of AWS Systems Manager: stores settings and secrets (`SecureString`) (doc 06) |
+| **Project** | In the new AWS experience: one AWS account plus its sharing settings, limited to one Region (doc 01) |
 | **RDS** | Relational Database Service: managed PostgreSQL, MySQL and others (doc 06) |
-| **Region** | A geographic area with its own copy of AWS services, e.g. `ap-southeast-1` Singapore (doc 00) |
+| **Region** | A geographic area with its own copy of AWS services, e.g. `ap-southeast-2` Sydney (doc 00) |
 | **Route table** | Decides where traffic leaving a subnet goes (doc 03) |
 | **S3** | Simple Storage Service: object storage in buckets (doc 07) |
+| **SCP** (service control policy) | A guardrail above the account that caps what any role in it can do. AWS sets them on new-experience projects (doc 01) |
 | **S3 Block Public Access** | Bucket/account settings that override anything that would make data public |
 | **Security group (SG)** | Stateful, allow-only firewall on a network interface. Can reference other SGs (doc 03, 05) |
 | **Session Manager** | Systems Manager feature: a shell on an instance through the AWS API, no SSH or open ports (doc 04) |

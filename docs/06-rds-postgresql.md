@@ -44,7 +44,7 @@ terraform init     # rds.tf uses a second provider, hashicorp/random
 terraform apply    # RDS takes about 5-10 minutes to create
 ```
 
-**Cost:** `db.t4g.micro` plus 20 GB storage, roughly $0.03/hour in Singapore. Destroy at the end of every session: it's the slowest piece to recreate, but also one of the most expensive to forget.
+**Cost:** `db.t4g.micro` plus 20 GB storage, roughly $0.03/hour in Sydney. Destroy at the end of every session: it's the slowest piece to recreate, but also one of the most expensive to forget.
 
 > If `apply` fails with a free-tier error about the **backup retention period**, set `backup_retention_period = 0` in `lab\rds.tf` and apply again. Write down what happened in doc 11.
 
@@ -72,7 +72,7 @@ aws ssm start-session --target <instance-id>
 
 ```bash
 sudo -i
-p() { aws ssm get-parameter --region ap-southeast-1 --name "$1" --with-decryption --query Parameter.Value --output text; }
+p() { aws ssm get-parameter --region ap-southeast-2 --name "$1" --with-decryption --query Parameter.Value --output text; }
 export PGHOST=$(p /harbor/db/host) PGDATABASE=$(p /harbor/db/name) PGUSER=$(p /harbor/db/user) PGPASSWORD=$(p /harbor/db/password)
 
 psql -c "SELECT version();"

@@ -44,6 +44,8 @@ boto3 uses the same `harbor` profile as the CLI and Terraform (`credential_proce
 
 Run it twice: once with the full lab up, and once after `terraform destroy`. Expected with the lab up: INFO lines for the running instances, load balancer, RDS instance and volumes; **no** finding for `harbor-alb-sg` (port 80 to the world is the point of a public load balancer); no HIGH findings if docs 01-08 were followed. Expected after destroy: no INFO inventory lines. If something is still listed, doc 13's cleanup isn't finished.
 
+> 🎓 **New-experience projects:** an AWS Builder ID owns the account and nobody can sign in as the root user, so it has no MFA device. If the report shows `[HIGH] Root user has no MFA` (exit code `1`), that's expected here: note it as a known exception in your write-up. On a classic account it is a real finding.
+
 `report.md` is git-ignored because it contains your account ID. To publish a sample (the way the AD lab did), copy it to `docs/sample-report.md` and mask the account ID first.
 
 ### Make it find something
@@ -69,7 +71,7 @@ aws ec2 delete-security-group --group-id $sg
 | Check | Expected |
 |---|---|
 | `python scripts\test_cloud_health_report.py` | `all checks passed` |
-| Report with the lab up | Inventory INFO lines, no HIGH |
+| Report with the lab up | Inventory INFO lines, no HIGH (except the root MFA note above) |
 | Bad SG test | HIGH finding for port 22, exit code 1 |
 | Report after `terraform destroy` | No inventory lines |
 

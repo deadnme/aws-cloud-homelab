@@ -48,7 +48,7 @@ sudo harbor-backup                          # Uploaded s3://harbor-backups-…/d
 ## Test the least-privilege boundary (still on the server, as root)
 
 ```bash
-B=$(aws ssm get-parameter --region ap-southeast-1 --name /harbor/backup/bucket --query Parameter.Value --output text)
+B=$(aws ssm get-parameter --region ap-southeast-2 --name /harbor/backup/bucket --query Parameter.Value --output text)
 
 aws s3 ls "s3://$B/db/"                     # allowed: list the db/ prefix
 aws s3 cp "s3://$B/db/$(aws s3 ls "s3://$B/db/" | tail -1 | awk '{print $4}')" /tmp/latest.sql.gz   # allowed: read a backup
@@ -61,6 +61,8 @@ echo test | aws s3 cp - "s3://$B/other/test.txt"   # DENIED: writes only under d
 ```
 
 Each denied command prints an `AccessDenied` error naming the action that's missing. Reading those messages is a daily cloud support skill.
+
+If a command marked DENIED works instead, the role has more than `s3.tf` gives it. Run doc 04's `list-attached-role-policies` check: an extra managed policy such as `PowerUserAccess` allows all of S3.
 
 ### Ask IAM instead of guessing
 

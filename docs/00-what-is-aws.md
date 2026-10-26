@@ -14,13 +14,13 @@ On AWS, Harbor Point rents servers by the second (OpEx), puts copies of the app 
 
 | Term | What it is | In this lab |
 |---|---|---|
-| **Region** | A geographic area with its own separate copy of most AWS services, e.g. `ap-southeast-1` | **Asia Pacific (Singapore)**: the oldest Region in Southeast Asia, the parent of the Manila Local Zone, and much closer to Manila than N. Virginia (see design decisions D-01) |
+| **Region** | A geographic area with its own separate copy of most AWS services, e.g. `ap-southeast-2` | **Asia Pacific (Sydney)**: the Region AWS assigned to my new-experience project. A project builds in its one Region only (see design decisions D-01) |
 | **Availability Zone (AZ)** | One or more data centres inside a Region, with separate power and networking, linked to the other AZs by fast private fibre | Two AZs, so one AZ can fail and the portal keeps running |
 | **Edge location** | A smaller site used by CloudFront (CDN) and Route 53 (DNS) to serve users nearby | Not used. No domain name in this lab |
 
-> 🎓 **AZ names are shuffled per account.** Your `ap-southeast-1a` may be a different building from someone else's `ap-southeast-1a`. The fixed name is the **AZ ID** (e.g. `apse1-az1`). This matters when two accounts must line up in the same physical AZ.
+> 🎓 **AZ names are shuffled per account.** Your `ap-southeast-2a` may be a different building from someone else's `ap-southeast-2a`. The fixed name is the **AZ ID** (e.g. `apse2-az1`). This matters when two accounts must line up in the same physical AZ.
 
-**Most services are regional.** If the console is set to N. Virginia (`us-east-1`), you will not see resources you built in Singapore. "My EC2 instance disappeared" is usually a wrong-Region problem. Some services are **global**: IAM, Billing, Budgets, CloudFront and Route 53.
+**Most services are regional.** A console set to N. Virginia (`us-east-1`) doesn't show resources built in Sydney. (A project's console always shows its own Region; the CLI's `--region` can still point elsewhere.) "My EC2 instance disappeared" is usually a wrong-Region problem. Some services are **global**: IAM, Billing, Budgets, CloudFront and Route 53.
 
 ## The shared responsibility model
 
@@ -54,8 +54,8 @@ Most AWS services have a counterpart in the Windows lab I already built. This is
 ## How AWS billing works (and what this lab does about it)
 
 - **On-demand, per second or per hour.** A running EC2 instance costs money every hour, **even when nobody uses the app.**
-- **Some things cost money while "doing nothing":** EBS disks, public IPv4 addresses (AWS charges for every public IPv4 address, about $0.005/hour), a load balancer that exists, an RDS database that exists, a NAT Gateway (roughly $40/month in Singapore before data charges, so this lab avoids it).
-- **Free Plan (accounts created after July 2025):** new accounts get $100 in credits, plus up to $100 more for completing onboarding activities. The Free Plan ends after 6 months or when the credits run out, whichever comes first. Usage is paid from the credits. Check the exact current terms on the [AWS Free Tier page](https://aws.amazon.com/free/), because they change.
+- **Some things cost money while "doing nothing":** EBS disks, public IPv4 addresses (AWS charges for every public IPv4 address, about $0.005/hour), a load balancer that exists, an RDS database that exists, a NAT Gateway (roughly $43/month in Sydney before data charges, so this lab avoids it).
+- **Free Tier credits (new accounts since July 2025, including new-experience projects):** $100 in credits at sign-up, plus up to $100 more for trying key services. Usage is paid from the credits. You must upgrade to keep using AWS once the credits run out or the account is 6 months old. You are not charged unless you upgrade, and the upgrade can't be undone. Check the exact current terms on the [AWS Free Tier page](https://aws.amazon.com/free/) and in AWS Settings → Billing, because they change.
 
 **Lab rules:**
 1. A budget alert exists before any resource does (doc 01).
@@ -63,7 +63,7 @@ Most AWS services have a counterpart in the Windows lab I already built. This is
 3. Every session ends with `terraform destroy`.
 4. Doc 13 proves nothing was left behind and records the total cost.
 
-## The Well-Architected Framework (one paragraph)
+## The Well-Architected Framework
 
 AWS's checklist for a good design has six pillars: **Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.** This lab touches each one: alarms and runbooks (operations), no SSH and least-privilege roles (security), two AZs and auto scaling (reliability), right-sized `t4g.micro` instances (performance), destroy-after-use and budgets (cost), and nothing left idle (sustainability).
 
@@ -71,10 +71,10 @@ AWS's checklist for a good design has six pillars: **Operational Excellence, Sec
 
 | Mistake | Result |
 |---|---|
-| Building in the console's default Region by accident | Resources "disappear" when you switch to Singapore, and they keep costing money |
+| Using the wrong Region in the CLI or Terraform | Resources seem to "disappear". In a project, creating them outside `ap-southeast-2` fails with `AccessDenied` instead |
 | Thinking "stopped" means free | A stopped EC2 instance still pays for its EBS disk. RDS restarts by itself after 7 days stopped |
 | Thinking managed means "AWS secures it for me" | Public buckets and open security groups are still your fault |
-| Using the root account day to day | One stolen password owns the whole account. See doc 01 |
+| Weak protection on the sign-in | One stolen password owns the whole project. See doc 01 |
 
 ## Interview questions
 
@@ -83,6 +83,6 @@ AWS's checklist for a good design has six pillars: **Operational Excellence, Sec
 - **"How would you make a web app highly available on AWS?"** Instances in two or more AZs behind a load balancer, an Auto Scaling group to replace failed instances, and a database with a standby (RDS Multi-AZ). That is the shape of this lab, except the database is single-AZ to save credits.
 - **"What is CapEx vs OpEx?"** CapEx is buying hardware up front. OpEx is paying as you go. Cloud moves IT spending to OpEx.
 - **"Name the six Well-Architected pillars."** Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization, Sustainability.
-- **"Why Singapore and not N. Virginia?"** It is closer to users in the Philippines (lower latency). Data-residency rules can also decide the Region.
+- **"How do you choose a Region?"** Latency to users, data-residency rules, which services and instance types it has, and price. My new-experience project had no choice: AWS assigns one Region per project (Sydney for me). A company in the Philippines would usually compare Singapore (`ap-southeast-1`) with the Manila Local Zone for low latency.
 
 ➡️ [01 · Account setup and hardening](01-account-setup-and-hardening.md)

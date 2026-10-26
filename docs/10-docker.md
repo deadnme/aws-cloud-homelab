@@ -13,7 +13,7 @@ FROM public.ecr.aws/docker/library/python:3.12-slim   # base image (ECR Public m
 WORKDIR /app
 RUN pip install --no-cache-dir boto3 "psycopg[binary]" # dependencies: a cached layer
 COPY app.py .                                          # the code: changes most often, so it comes last
-ENV HOST=0.0.0.0 PORT=8080 AWS_DEFAULT_REGION=ap-southeast-1
+ENV HOST=0.0.0.0 PORT=8080 AWS_DEFAULT_REGION=ap-southeast-2
 USER nobody                                            # don't run as root inside the container
 EXPOSE 8080
 CMD ["python", "app.py"]
@@ -67,7 +67,7 @@ Run the build again: every step says `CACHED` (or finishes instantly). Now edit 
 | **ECS on Fargate** | AWS runs your containers; no servers to manage | Most small/medium apps. The next step for this portal would be an ECS service behind the same ALB |
 | **ECS on EC2** | Containers on your own instances | Cheaper at steady scale, more to manage |
 | **EKS** | Managed Kubernetes | Teams that standardise on Kubernetes; more moving parts |
-| **App Runner** | Give it an image, get an HTTPS URL | Simplest possible container hosting |
+| **ECS Express Mode** | Give it an image, get an HTTPS URL; ECS sets up the load balancer and scaling | Simplest container hosting today. (App Runner did this before, but it closed to new customers on 30 April 2026) |
 
 ## Verify it worked
 

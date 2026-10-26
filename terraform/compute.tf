@@ -44,6 +44,14 @@ resource "aws_iam_role_policy_attachment" "app_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Terraform owns the role's full list of attached managed policies. A
+# new-experience project may attach extra ones (e.g. PowerUserAccess) to new
+# roles by itself; every apply removes them, so least privilege (doc 07) holds.
+resource "aws_iam_role_policy_attachments_exclusive" "app" {
+  role_name   = aws_iam_role.app.name
+  policy_arns = [aws_iam_role_policy_attachment.app_ssm.policy_arn]
+}
+
 # The app and the backup script read their settings (database host, password,
 # bucket name) from Parameter Store under /harbor/. This policy grants
 # nothing more, but AmazonSSMManagedInstanceCore (above) also allows

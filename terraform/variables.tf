@@ -1,7 +1,7 @@
 variable "region" {
-  description = "AWS Region for every lab resource. Singapore: the oldest Southeast Asia Region and parent of the Manila Local Zone (see docs/design-decisions.md D-01)."
+  description = "AWS Region for every lab resource. Sydney: the Region assigned to this new-AWS-experience project, and the only one it can build in (see docs/design-decisions.md D-01)."
   type        = string
-  default     = "ap-southeast-1"
+  default     = "ap-southeast-2"
 }
 
 variable "instance_type" {

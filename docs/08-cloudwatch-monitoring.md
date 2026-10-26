@@ -22,7 +22,7 @@ Servers in an Auto Scaling group come and go. A log file on a server that was re
 
 > 🎓 **Why the agent?** EC2's built-in metrics come from the hypervisor: CPU, network, disk I/O. The hypervisor can't see inside the OS, so **memory and disk-space usage need the CloudWatch agent.**
 
-Cost: within the always-free CloudWatch allowance for this size (10 alarms, 10 custom metrics, 3 dashboards, 5 GB of logs per month). Agent metrics count per instance, and replaced instances add new ones, so check **Billing → Free Tier** after a long session.
+Cost: within the always-free CloudWatch allowance for this size (10 alarms, 10 custom metrics, 3 dashboards, 5 GB of logs per month). Agent metrics count per instance, and replaced instances add new ones, so check credits in **AWS Settings → Billing** after a long session.
 
 ## Build it
 
@@ -109,7 +109,7 @@ _My output: (screenshot the dashboard to `screenshots/08-dashboard.png`, paste t
 - **"What are an alarm's three states?"** `OK`, `ALARM`, `INSUFFICIENT_DATA`.
 - **"How would you find all 5xx errors from the last hour?"** CloudWatch Logs Insights on the access log group, filtering on the status field. For ALB-wide counts, the `HTTPCode_ELB_5XX_Count` / `HTTPCode_Target_5XX_Count` metrics.
 - **"CloudWatch vs CloudTrail?"** CloudWatch: performance metrics, logs and alarms ("how is it running?"). CloudTrail: API audit log ("who changed what?").
-- **"How do you get notified?"** Alarm → SNS topic → email, SMS, chat (via AWS Chatbot) or a ticketing system webhook.
+- **"How do you get notified?"** Alarm → SNS topic → email, SMS, chat (via Amazon Q Developer in chat applications, formerly AWS Chatbot) or a ticketing system webhook.
 - **"How do you monitor what clients actually see?"** Health checks and 5xx alarms on the load balancer, plus synthetic checks from outside (CloudWatch Synthetics canaries). Internal metrics alone miss things like a broken security group in front of the site (ticket BF-1 in doc 12).
 
 ⬅️ [07 · S3 and IAM roles](07-s3-and-iam-roles.md) | ➡️ [09 · Automation: cloud health report](09-automation-cloud-health-report.md)

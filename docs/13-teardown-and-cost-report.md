@@ -66,11 +66,11 @@ Cost Explorer data lags up to 24 hours, so do this the day after a session.
 3. Filter **Tag: Project = aws-cloud-homelab** (works after you activated the tag in doc 03; earlier spend shows untagged).
 4. Make sure **charge type** includes usage and excludes credits, so you see what the lab really used.
 5. Screenshot it to `screenshots/13-cost-explorer.png`.
-6. **Billing → Credits** (or the Free Plan panel on Console Home): note the credits used and remaining.
+6. **AWS Settings → Billing**: note the credits used and remaining.
 
 ### Rough estimate for comparison
 
-These are approximate Singapore on-demand prices. Check the [AWS Pricing Calculator](https://calculator.aws/) for current ones.
+These are approximate Sydney on-demand prices. Check the [AWS Pricing Calculator](https://calculator.aws/) for current ones.
 
 | Running | Approx. per hour |
 |---|---|
@@ -94,8 +94,8 @@ _Fill in from Cost Explorer: total spend, spend by service, hours of lab time, c
 
 ## When you're completely done with the lab
 
-- Leave the account on the Free Plan. It closes or asks you to upgrade when the plan ends (6 months or credits used). **Don't upgrade** unless you mean to pay.
-- If you want to close the account: as root, **Account → Close account**. Do it only after the checks above are clean.
+- Leave the project on the Free Tier. When the credits run out or the account is 6 months old, AWS asks you to upgrade. **Don't upgrade** unless you mean to pay: it can't be undone.
+- If you want to close the account: **AWS Settings** (the console can't do it in a project). Do it only after the checks above are clean.
 - Keep the repo: the docs, Terraform and screenshots are the portfolio piece; the AWS resources never were.
 
 ## Interview questions

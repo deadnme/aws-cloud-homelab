@@ -42,7 +42,7 @@ inst = [{"InstanceId": "i-tagged", "Tags": [{"Key": "Project", "Value": "aws-clo
         {"InstanceId": "i-untagged"}]
 assert [f["resource"] for f in r.missing_project_tag(inst)] == ["i-untagged"]
 
-md = r.render_markdown(r.open_to_world(sgs), "123456789012", "ap-southeast-1")
+md = r.render_markdown(r.open_to_world(sgs), "123456789012", "ap-southeast-2")
 assert md.startswith("# Cloud health report") and "**HIGH** 2" in md, md
 assert r.render_text([]) == "No findings."
 assert "| - | No findings |" in r.render_markdown([], "1", "r")

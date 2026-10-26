@@ -145,7 +145,7 @@ Only open these after you've solved the ticket or given up.
 
 **Cause:** the inline policy `harbor-backup-s3` was deleted from `harbor-app-role`.
 
-**How to find it:** `pg_dump` works, then `aws s3 cp` fails with `AccessDenied … not authorized to perform: s3:PutObject`. The role's inline policies (`aws iam list-role-policies --role-name harbor-app-role`) are `harbor-read-params` and `harbor-cloudwatch-agent`: `harbor-backup-s3` is missing. The policy simulator (doc 07) says `implicitDeny`. CloudTrail (Region `us-east-1`, IAM is global): `DeleteRolePolicy`.
+**How to find it:** `pg_dump` works, then `aws s3 cp` fails with `AccessDenied … not authorized to perform: s3:PutObject`. The role's inline policies (`aws iam list-role-policies --role-name harbor-app-role`) are `harbor-read-params` and `harbor-cloudwatch-agent`: `harbor-backup-s3` is missing. The policy simulator (doc 07) says `implicitDeny`. CloudTrail in `us-east-1` (IAM is global; use `aws cloudtrail lookup-events --region us-east-1` as in doc 01): `DeleteRolePolicy`.
 
 **Fix:** `terraform apply`. IAM changes can take a few seconds to apply everywhere, so retry the backup after a short wait.
 

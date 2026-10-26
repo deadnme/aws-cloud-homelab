@@ -45,9 +45,17 @@ terraform apply
 
 `terraform plan` shows the AMI ID as a normal value: the data source reads the public SSM parameter `/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64`, so the newest Amazon Linux is used without a hard-coded ID.
 
-**Costs start now:** two `t4g.micro` instances plus two public IPv4 addresses, roughly $0.03/hour in Singapore. `terraform destroy` at the end of the session.
+**Costs start now:** two `t4g.micro` instances plus two public IPv4 addresses, roughly $0.03/hour in Sydney. `terraform destroy` at the end of the session.
 
 Watch the launch: **EC2 → Auto Scaling groups → harbor-app-asg → Activity**. Two "Launching a new EC2 instance" entries appear, one per AZ.
+
+Check what the role really has:
+
+```powershell
+aws iam list-attached-role-policies --role-name harbor-app-role --query "AttachedPolicies[].PolicyName" --output text
+```
+
+Expected: only `AmazonSSMManagedInstanceCore`. A new-experience project may attach extra AWS managed policies (such as `PowerUserAccess`) to new roles by itself. `compute.tf` makes Terraform own the full list of attached policies, so `terraform apply` removes any extra one. If one keeps coming back, write it down in doc 11: doc 07's least-privilege tests depend on it.
 
 ## Get a shell with Session Manager
 
@@ -127,7 +135,8 @@ The servers have public IPs only so they can reach the internet without a NAT Ga
 | `cloud-init status` | `status: done` |
 | `curl -s localhost/health` (inside) | `ok` |
 | Port 22 and 80 from the laptop | Both fail |
-| CloudTrail Event history (Singapore), event `StartSession` | Your IAM user, with your IP |
+| CloudTrail Event history (Sydney), event `StartSession` | Your `AccountFullAccessRole` session, with your IP |
+| `aws iam list-attached-role-policies --role-name harbor-app-role` | Only `AmazonSSMManagedInstanceCore` |
 
 _My output: (paste `systemctl status`, the IMDS lines and the `Test-NetConnection` results here)_
 

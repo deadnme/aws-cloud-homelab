@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir boto3 "psycopg[binary]"
 COPY app.py .
 
 # Inside a container the app must listen on all interfaces, not just localhost.
-ENV HOST=0.0.0.0 PORT=8080 AWS_DEFAULT_REGION=ap-southeast-1
+ENV HOST=0.0.0.0 PORT=8080 AWS_DEFAULT_REGION=ap-southeast-2
 USER nobody
 EXPOSE 8080
 CMD ["python", "app.py"]

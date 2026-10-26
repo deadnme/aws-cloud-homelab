@@ -25,10 +25,10 @@ Before building, I reviewed entry-level and junior cloud postings in the Philipp
 ```mermaid
 flowchart TB
     clients(["Clients on the internet"])
-    admin(["Admin: sean.admin + MFA"])
+    admin(["Admin: aws login session + MFA"])
     email(["Alert email"])
 
-    subgraph region["ap-southeast-1 (Singapore)"]
+    subgraph region["ap-southeast-2 (Sydney)"]
         subgraph vpc["VPC 10.20.0.0/16"]
             igw["Internet gateway"]
             subgraph public["Public subnets"]
@@ -71,11 +71,11 @@ Why each part is built this way, what else was considered, and what production w
 
 | This lab | Production | Why the lab differs |
 |---|---|---|
-| App instances in public subnets, locked down by security groups | Private subnets plus a NAT Gateway or VPC endpoints | A NAT Gateway costs roughly $40/month in Singapore |
+| App instances in public subnets, locked down by security groups | Private subnets plus a NAT Gateway or VPC endpoints | A NAT Gateway costs roughly $43/month in Sydney |
 | RDS single-AZ, 1-day backups | RDS Multi-AZ, longer retention, deletion protection | Doubles the database cost |
 | HTTP on the load balancer's DNS name | HTTPS with ACM and a Route 53 domain | Needs a paid domain |
 | Local Terraform state | S3 backend with locking | One person, one environment |
-| IAM user with MFA + `aws login` | IAM Identity Center | Identity Center creates an AWS Organization, which ends the Free Plan |
+| The project's managed full-access role + `aws login` | IAM Identity Center with permission sets | A new-experience project doesn't support Identity Center without activating advanced features |
 
 ## Cost rules
 
@@ -91,7 +91,7 @@ Each page follows the same layout: **Goal → Why a company does this → What g
 | # | Page | You'll learn | Status |
 |---|---|---|---|
 | 00 | [What is AWS](docs/00-what-is-aws.md) | Regions, AZs, shared responsibility, billing, AD lab → AWS map | 📖 read |
-| 01 | [Account setup and hardening](docs/01-account-setup-and-hardening.md) | Root MFA, admin user, billing access, budget, CloudTrail | 📝 to run |
+| 01 | [Account setup and hardening](docs/01-account-setup-and-hardening.md) | New AWS experience sign-up, Region, MFA, budget, CloudTrail | 📝 to run |
 | 02 | [Workstation tooling](docs/02-workstation-tooling.md) | AWS CLI, `aws login`, Terraform smoke test, the `lab/` folder | 📝 to run |
 | 03 | [VPC networking](docs/03-vpc-networking.md) | Subnets, route tables, internet gateway, SG vs NACL, CIDR math | 📝 to run |
 | 04 | [Linux on EC2](docs/04-linux-on-ec2.md) | User data, `systemd`, logs, IMDSv2, Session Manager instead of SSH | 📝 to run |
@@ -116,6 +116,7 @@ Each page follows the same layout: **Goal → Why a company does this → What g
 | `app/` | The portal (`app.py`, Python standard library + boto3 + psycopg) and its `Dockerfile` |
 | `scripts/` | `user-data.sh.tftpl` (first boot), `cloud_health_report.py` + its self-test |
 | `breakfix/` | `break.ps1` / `restore.ps1` for the doc 12 tickets (**spoilers**: don't read before solving) |
+| `tools/` | `gen_note.py`: rebuilds my single-page Obsidian copy of the guide from the docs and code |
 | `.github/workflows/terraform.yml` | `terraform fmt` and `validate` on every push. No AWS credentials in GitHub |
 | `screenshots/`, `media/` | Real screenshots and the demo video from my account |
 

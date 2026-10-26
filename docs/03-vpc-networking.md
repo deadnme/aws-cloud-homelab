@@ -12,8 +12,8 @@ A VPC is the company's own isolated network inside AWS, like the `HarborNet` NAT
 |---|---|---|
 | VPC CIDR | `10.20.0.0/16` (65,536 addresses) | Private range (RFC 1918). Doesn't overlap the AD lab's `10.10.10.0/24`, so the two could be joined by VPN later |
 | Subnets | Four `/24`s: public `10.20.1.0/24`, `10.20.2.0/24`; private `10.20.11.0/24`, `10.20.12.0/24` | One public and one private per AZ. Easy to read: 1x = public, 1x = private |
-| AZs | The first two available in `ap-southeast-1` | High availability needs at least two |
-| Internet access for private subnets | **None** (no NAT Gateway) | Only the database lives there, and it never needs the internet. Saves roughly $40/month |
+| AZs | The first two available in `ap-southeast-2` | High availability needs at least two |
+| Internet access for private subnets | **None** (no NAT Gateway) | Only the database lives there, and it never needs the internet. Saves roughly $43/month |
 | Network ACLs | The VPC's default (allow all) | Security groups do the filtering. NACLs appear in a break-fix ticket (doc 12) |
 
 ### CIDR math you will be asked about

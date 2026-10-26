@@ -6,7 +6,7 @@ The decisions were made when the lab was written (with AI assistance, see the [R
 
 Three constraints drive almost every decision:
 
-1. **Free Plan, credits only.** Nothing may end the Free Plan (that rules out AWS Organizations and IAM Identity Center), and anything billed by the hour while idle has to justify itself.
+1. **New AWS experience, Free Tier credits only.** One project in one Region, guarded by AWS-managed SCPs. Nothing may need an upgrade or "advanced features" (that rules out AWS Organizations and IAM Identity Center), and anything billed by the hour while idle has to justify itself.
 2. **Teach what PH junior cloud postings ask for:** EC2, Linux, VPC, IAM, RDS, S3, CloudWatch, Terraform (see the [README table](../README.md#what-employers-ask-for-and-where-its-covered)).
 3. **Build it, break it, destroy it every session.** Everything must come back with one `terraform apply`.
 
@@ -18,8 +18,8 @@ The diagram is in the [README](../README.md#architecture). The decisions below r
 
 | # | Decision | Doc |
 |---|---|---|
-| [D-01](#d-01-region-ap-southeast-1-singapore) | Region: Singapore | 00 |
-| [D-02](#d-02-identity-iam-user-with-mfa-and-aws-login-no-access-keys) | Identity: IAM user + MFA + `aws login`, no access keys | 01, 02 |
+| [D-01](#d-01-region-ap-southeast-2-sydney) | Region: Sydney | 00 |
+| [D-02](#d-02-identity-the-projects-managed-role-with-aws-login-no-access-keys) | Identity: the project's managed role + `aws login`, no access keys | 01, 02 |
 | [D-03](#d-03-billing-guards-are-made-by-hand-not-by-terraform) | Budget and CloudTrail made by hand, not by Terraform | 01 |
 | [D-04](#d-04-terraform-one-root-module-local-state) | Terraform, one root module, local state | 02 |
 | [D-05](#d-05-app-servers-in-public-subnets-no-nat-gateway) | App servers in public subnets, no NAT Gateway | 03 |
@@ -40,21 +40,21 @@ The diagram is in the [README](../README.md#architecture). The decisions below r
 
 ---
 
-## D-01 Region: ap-southeast-1 (Singapore)
+## D-01 Region: ap-southeast-2 (Sydney)
 
-- **Choice:** every resource in `ap-southeast-1` ([`variables.tf`](../terraform/variables.tf)).
-- **Considered:** Hong Kong (`ap-east-1`) and Taipei (`ap-east-2`), which are closer to Manila; `us-east-1` (often slightly cheaper, and new services usually launch there first).
-- **Why:** Singapore is the oldest AWS Region in Southeast Asia (2010), with the widest range of services nearby, and it is the parent Region of the Manila Local Zone. Hong Kong and Taipei are opt-in Regions with fewer services. Latency from Manila has not been measured for this lab.
-- **Trade-off:** prices are a little higher than `us-east-1`. Global services (IAM, Budgets) still log their CloudTrail events in `us-east-1`, which doc 01 points out.
-- **Revisit when:** data residency or a client contract names a specific Region.
+- **Choice:** every resource in `ap-southeast-2` ([`variables.tf`](../terraform/variables.tf)).
+- **Considered:** Singapore (`ap-southeast-1`), the usual pick from Manila: closest large Region and the parent of the Manila Local Zone. This guide first targeted it.
+- **Why:** the account is a new-AWS-experience project. AWS assigns each project one Region from the country in the contact address, out of `us-east-2`, `eu-north-1` and `ap-southeast-2`, and the project SCP denies building regional resources anywhere else. Sydney is the assigned Region, so it is the only option. Latency from Manila has not been measured for this lab.
+- **Trade-off:** further from the Philippines than Singapore (higher latency for real clients). Global services (IAM, Budgets) still log their CloudTrail events in `us-east-1`, which doc 01 points out.
+- **Revisit when:** the account activates advanced features or moves to a classic account (then Singapore), or data residency or a client contract names a specific Region.
 
-## D-02 Identity: IAM user with MFA and `aws login`, no access keys
+## D-02 Identity: the project's managed role with `aws login`, no access keys
 
-- **Choice:** root has MFA and is locked away. Daily work uses the IAM user `sean.admin` with MFA. The CLI signs in with `aws login` (short-lived credentials), and Terraform/boto3 reuse them through `credential_process` (doc 02).
-- **Considered:** IAM Identity Center (the production standard); an IAM user with long-lived access keys; using root.
-- **Why:** Identity Center needs AWS Organizations, and creating an organization upgrades a Free Plan account and ends the credits. Access keys are the credential most often leaked (Git commits, screenshots). Root is never for daily use.
-- **Trade-off:** IAM users don't scale past one or two people, and there's no central place to manage several accounts.
-- **Revisit when:** the account moves to a paid plan or a second person or account joins. Then: Identity Center with permission sets.
+- **Choice:** sign in through my own login with 2-step verification. The console and the CLI use the project's AWS-managed `AccountFullAccessRole`. The CLI signs in with `aws login` (short-lived credentials), and Terraform/boto3 reuse them through `credential_process` (doc 02). No IAM users.
+- **Considered:** IAM Identity Center (the production standard); an IAM user with long-lived access keys; an IAM user with a console password.
+- **Why:** a new-experience project manages human access itself and doesn't support Identity Center without activating advanced features. Access keys are the credential most often leaked (Git commits, screenshots). An AWS Builder ID owns the account instead of a root user email, and nobody can sign in as root.
+- **Trade-off:** one broad role for all my work, and team access is managed in AWS Settings rather than in IAM.
+- **Revisit when:** the account is upgraded or a second person joins. Then: invite team members through AWS Settings, or activate advanced features and use Identity Center with permission sets.
 
 ## D-03 Billing guards are made by hand, not by Terraform
 
@@ -76,7 +76,7 @@ The diagram is in the [README](../README.md#architecture). The decisions below r
 
 - **Choice:** the app instances sit in the public subnets with public IPs. Only the database is private ([`network.tf`](../terraform/network.tf)).
 - **Considered:** private app subnets with a NAT Gateway; private app subnets with VPC endpoints.
-- **Why:** a NAT Gateway costs roughly $40/month in Singapore (about $0.06/hour), idle or not. That adds more than half again to the lab's roughly $0.10/hour, and one per AZ would about double it. VPC interface endpoints (SSM, CloudWatch Logs, CloudWatch metrics) are also billed per hour per AZ, and `pip` still needs a way out to PyPI. The security groups do the protecting: nothing from the internet reaches an instance except port 80 from the ALB, and there is no SSH.
+- **Why:** a NAT Gateway costs roughly $43/month in Sydney (about $0.06/hour), idle or not. That adds more than half again to the lab's roughly $0.10/hour, and one per AZ would about double it. VPC interface endpoints (SSM, CloudWatch Logs, CloudWatch metrics) are also billed per hour per AZ, and `pip` still needs a way out to PyPI. The security groups do the protecting: nothing from the internet reaches an instance except port 80 from the ALB, and there is no SSH.
 - **Trade-off:** instances have public IPs (about $0.005/hour each), and a mistake in a security group exposes them directly. Break-fix tickets practise exactly that kind of mistake.
 - **Revisit when:** the portal holds real client data. Then: app servers in private subnets with a NAT Gateway per AZ, or endpoints plus a baked AMI so instances never need the internet.
 

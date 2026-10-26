@@ -11,7 +11,7 @@ Clicking through the console is fine for learning, but nobody can review or repe
 | Decision | My choice | Why |
 |---|---|---|
 | Shell | PowerShell (built-in Windows PowerShell 5.1 or PowerShell 7, both work) | Same shell as the AD lab. Linux commands come later, *inside* the EC2 instances |
-| CLI sign-in | `aws login` (needs AWS CLI **2.32.0 or later**) | Temporary credentials from my console sign-in, which already passed MFA. They refresh for up to 12 hours, then I sign in again |
+| CLI sign-in | `aws login` (needs AWS CLI **2.32.0 or later**) | Temporary credentials from my browser sign-in, which already passed MFA. Each set lasts 12 hours, and the CLI renews them for up to 90 days before I must sign in again |
 | Terraform credentials | A second profile that borrows the `aws login` session through `credential_process` | AWS documents this bridge for tools that don't read `aws login` sessions directly. Terraform reads `credential_process` profiles |
 | Terraform state | Local file, ignored by Git | One person, one environment. A team would use an S3 backend with state locking |
 
@@ -38,31 +38,33 @@ The Session Manager plugin is not needed until doc 04. It lets `aws ssm start-se
 ### 2. Sign the CLI in
 
 ```powershell
-aws login --profile harbor-login
+aws login --profile homelab
 ```
 
-- When asked for a Region, enter `ap-southeast-1`.
-- A browser opens. Pick the `sean.admin` session (or sign in with MFA), then return to the terminal.
+- When asked for a Region, enter `ap-southeast-2` (your project's Region from doc 01).
+- A browser opens. Sign in with your login (and MFA), choose the **project** this lab uses, then return to the terminal. If a "Choose AWS sessions" page lists several sessions, pick the one for this project.
 
 Test it:
 
 ```powershell
-aws sts get-caller-identity --profile harbor-login
+aws sts get-caller-identity --profile homelab
 ```
 
-Expected: JSON with `UserId`, `Account` (your 12-digit account ID) and an `Arn` ending in `:user/sean.admin`. If the ARN ends in `:root`, you signed in as root. Run `aws logout --profile harbor-login` and sign in again as the admin user.
+Expected: JSON with `UserId`, `Account` (the 12-digit account ID you noted in doc 01) and an `Arn` like `arn:aws:sts::<account-id>:assumed-role/AccountFullAccessRole/<session>`. If the account ID doesn't match, you picked another project: run `aws logout --profile homelab` and sign in again.
+
+> 💡 AWS Settings also offers **Create and manage cloud infrastructure → Use your AWS credentials with AI coding tools**, which sets up the same `aws login` profile for an AI coding agent. This lab doesn't need it.
 
 ### 3. Add the profile Terraform will use
 
-Open `%USERPROFILE%\.aws\config` (e.g. `notepad $HOME\.aws\config`). `aws login` already wrote a `[profile harbor-login]` block. Add this one below it:
+Open `%USERPROFILE%\.aws\config` (e.g. `notepad $HOME\.aws\config`). `aws login` already wrote a `[profile homelab]` block. Add this one below it:
 
 ```ini
 [profile harbor]
-credential_process = aws configure export-credentials --profile harbor-login --format process
-region = ap-southeast-1
+credential_process = aws configure export-credentials --profile homelab --format process
+region = ap-southeast-2
 ```
 
-`harbor` holds no secrets. Whenever a tool needs credentials, it runs the CLI, which hands over the current short-lived ones from the `harbor-login` session.
+`harbor` holds no secrets. Whenever a tool needs credentials, it runs the CLI, which hands over the current short-lived ones from the `homelab` session.
 
 ```powershell
 $env:AWS_PROFILE = 'harbor'
@@ -117,7 +119,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ## Every lab session from now on
 
 ```powershell
-aws login --profile harbor-login      # once every 12 hours at most
+aws login --profile homelab           # only when the CLI asks you to sign in again
 $env:AWS_PROFILE = 'harbor'
 cd $HOME\aws-cloud-homelab\lab
 terraform apply                        # rebuilds everything you have copied in so far
@@ -134,8 +136,8 @@ After doc 08: every rebuild creates a **new** SNS email subscription. Click the 
 | Old AWS CLI (before 2.32.0) | `aws: error: argument command: Invalid choice` for `login` |
 | Not reopening the terminal after `winget` | `aws` / `terraform` is not recognized |
 | `$env:AWS_PROFILE` not set in a new terminal | Terraform: `No valid credential sources found`. The CLI: `Unable to locate credentials` |
-| Session older than 12 hours | An expired-session / sign-in-again error (Terraform reports it as a `credential_process` failure). Run `aws login --profile harbor-login` again |
-| Signed in as root in the browser | `caller_arn` ends in `:root`. Everything works, which is exactly the problem |
+| Session expired (renewal stopped, or more than 90 days) | An expired-session / sign-in-again error (Terraform reports it as a `credential_process` failure). Run `aws login --profile homelab` again |
+| Picked the wrong project in the browser | `account_id` doesn't match doc 01. Terraform builds in the wrong account |
 | Committing `terraform.tfstate` | State holds resource details and secrets (doc 06's database password is in it). `.gitignore` blocks it, and `lab/` is ignored as a whole |
 
 ## Interview questions

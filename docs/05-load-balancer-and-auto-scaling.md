@@ -45,7 +45,7 @@ $url = terraform output -raw alb_url
 $url
 ```
 
-**Cost:** an ALB is billed per hour plus usage (roughly $0.03/hour in Singapore when idle), plus a public IPv4 for each AZ it runs in. Destroy at the end of the session.
+**Cost:** an ALB is billed per hour plus usage (roughly $0.03/hour in Sydney when idle), plus a public IPv4 for each AZ it runs in. Destroy at the end of the session.
 
 The DNS name takes a minute or two to resolve after creation.
 
