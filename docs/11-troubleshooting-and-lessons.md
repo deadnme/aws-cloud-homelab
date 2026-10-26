@@ -49,6 +49,7 @@ These are **anticipated**, not observed. They're the usual first-run problems wi
 |---|---|---|
 | `aws login` not a valid command | AWS CLI older than 2.32.0 | `winget upgrade --id Amazon.AWSCLI -e`, reopen terminal |
 | Terraform `No valid credential sources found` | `$env:AWS_PROFILE` not set in this terminal, or the login session expired | Doc 02's "every session" block |
+| First `apply` of doc 04 fails at `aws_autoscaling_group.app`; ASG activity says `Authentication Failure. Launching EC2 instance failed.`; the group is `tainted` | IAM eventual consistency: the ASG launched before the new instance profile had reached EC2. The ASG retries by itself a minute later | Check **EC2 → Auto Scaling groups → harbor-app-asg → Activity**: if the later launches succeeded, `terraform untaint aws_autoscaling_group.app`, then `terraform plan` shows no changes. Otherwise just `terraform apply` again |
 | `TargetNotConnected` on `start-session` | SSM agent not registered yet | Wait 2-3 minutes after launch |
 | Targets `unhealthy` right after launch | User data still installing | Wait out the 300 s grace period; check `cloud-init status` |
 | ASG keeps replacing new instances | Health check fails for real (bootstrap error) | Session Manager into the newest instance, read `/var/log/cloud-init-output.log` |

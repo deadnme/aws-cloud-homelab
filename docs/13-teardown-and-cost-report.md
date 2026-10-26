@@ -63,7 +63,7 @@ Cost Explorer data lags up to 24 hours, so do this the day after a session.
 
 1. **Billing and Cost Management → Cost Explorer**.
 2. Date range: from the account's creation to today. Granularity: **Daily**. Group by: **Service**.
-3. Filter **Tag: Project = aws-cloud-homelab** (works after you activated the tag in doc 03; earlier spend shows untagged).
+3. On a classic account, filter **Tag: Project = aws-cloud-homelab** (after activating the tag, doc 03). In a new-experience project that filter isn't available. Skip it: the project only holds the lab, so the services listed are the lab's cost.
 4. Make sure **charge type** includes usage and excludes credits, so you see what the lab really used.
 5. Screenshot it to `screenshots/13-cost-explorer.png`.
 6. **AWS Settings → Billing**: note the credits used and remaining.

@@ -16,7 +16,7 @@
 | **CloudTrail** | Audit log of AWS API calls: who did what, when, from where (doc 01) |
 | **CloudWatch** | Metrics, logs, alarms and dashboards (doc 08) |
 | **CloudWatch agent** | Software on the instance that sends OS metrics (memory, disk) and log files to CloudWatch |
-| **Cost allocation tag** | A tag activated in Billing so Cost Explorer can group spend by it (doc 03, 13) |
+| **Cost allocation tag** | A tag activated in Billing so Cost Explorer can group spend by it. Not available in a new-experience project without advanced features (doc 03, 13) |
 | **`credential_process`** | AWS config setting that runs a command to fetch credentials; used to give Terraform the `aws login` session (doc 02) |
 | **Drift** | Real infrastructure no longer matching the Terraform code because of a manual change (doc 11, 12) |
 | **EBS** | Elastic Block Store: the network disks attached to EC2 instances |

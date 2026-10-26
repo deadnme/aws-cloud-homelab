@@ -64,9 +64,9 @@ terraform apply
 
 This costs nothing: VPCs, subnets, route tables and internet gateways are free. (NAT Gateways, public IPv4 addresses and VPC endpoints are not.)
 
-### Activate the cost allocation tag (one time)
+### Cost allocation tags (skip in a new-experience project)
 
-**Billing and Cost Management** → **Cost allocation tags** → find `Project` (it appears once a tagged resource exists, which can take up to 24 hours) → **Activate**. From then on, Cost Explorer can filter spend by `Project=aws-cloud-homelab` (doc 13).
+On a classic account you would now activate the `Project` tag: **Billing and Cost Management** → **Cost allocation tags** → `Project` → **Activate**, so Cost Explorer can filter spend by `Project=aws-cloud-homelab`. In a new-experience project the page says *"This feature is only available in enterprise AWS"*: it needs advanced features, which this lab doesn't activate (doc 01). **Skip it.** The project holds only the lab, so doc 13 groups Cost Explorer by **Service** instead. The tags still exist on every resource, and doc 13's leftover check reads them through the tagging API, which doesn't need activation.
 
 ## Verify it worked
 
