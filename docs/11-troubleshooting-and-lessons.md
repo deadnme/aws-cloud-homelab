@@ -43,32 +43,58 @@ A request to the portal travels: **client → DNS → load balancer (SG, NACL, l
 
 ## Problems you're likely to hit while building
 
-These are **anticipated**, not observed. They're the usual first-run problems with this kind of setup. Move them to the next section if they happen to you, with your real error text.
+These are **anticipated**, not observed: the usual first-run problems with this kind of setup. The ones I actually hit are in the next section.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `aws login` not a valid command | AWS CLI older than 2.32.0 | `winget upgrade --id Amazon.AWSCLI -e`, reopen terminal |
-| Terraform `No valid credential sources found` | `$env:AWS_PROFILE` not set in this terminal, or the login session expired | Doc 02's "every session" block |
-| First `apply` of doc 04 fails at `aws_autoscaling_group.app`; ASG activity says `Authentication Failure. Launching EC2 instance failed.`; the group is `tainted` | IAM eventual consistency: the ASG launched before the new instance profile had reached EC2. The ASG retries by itself a minute later | Check **EC2 → Auto Scaling groups → harbor-app-asg → Activity**: if the later launches succeeded, `terraform untaint aws_autoscaling_group.app`, then `terraform plan` shows no changes. Otherwise just `terraform apply` again |
 | `TargetNotConnected` on `start-session` | SSM agent not registered yet | Wait 2-3 minutes after launch |
 | Targets `unhealthy` right after launch | User data still installing | Wait out the 300 s grace period; check `cloud-init status` |
 | ASG keeps replacing new instances | Health check fails for real (bootstrap error) | Session Manager into the newest instance, read `/var/log/cloud-init-output.log` |
 | `/db` says `not configured` | Doc 06 not applied yet, or parameters deleted | `aws ssm get-parameters-by-path --path /harbor --recursive` |
 | RDS create fails with a free-tier backup retention error | Free plan limit | `backup_retention_period = 0` (doc 06) |
 | No alarm emails | SNS subscription not confirmed | Click the confirmation link (doc 08) |
-| Budget email recipient "Inactive"; **Send verification** says no permission for `notifications-contacts:*` | Budgets verifies new recipients since 30 September 2026, and the project SCP denies `notifications-contacts` | Send the alerts through an SNS topic (doc 01, step 5) |
 | `CWAgent` metrics missing | Instances booted before doc 08 | Instance refresh (doc 08) |
 | `AccessDenied` mentioning a service control policy, on a call that worked before | Wrong Region (the project only allows `ap-southeast-2`), or the project is near its spend limit | Check `region` in `~/.aws/config` and `variables.tf`. Check credits and spend in AWS Settings → Billing |
 | An S3 or IAM action the docs say is DENIED works | An extra managed policy is attached to `harbor-app-role` (a project may add one) | `aws iam list-attached-role-policies --role-name harbor-app-role`, then `terraform apply` (doc 04) |
-| `terraform destroy` hangs on the VPC or subnets | Something not managed by Terraform still uses them (e.g. a test security group, the BF-3 NACL) | Delete it by hand (doc 13 lists where to look), destroy again |
+| `terraform destroy` hangs on the VPC or subnets | Something not managed by Terraform still uses them (e.g. the doc 09 test security group) | Delete it by hand, destroy again, then run doc 02's leftover check |
 
 ## What actually broke for me
 
-_Fill this in as you go: symptom, the exact error text, how you found the cause, the fix, and the lesson. Only real events, like doc 11 of the AD lab._
+Real events from building docs 01-10 on my own new-AWS-experience project (`ap-southeast-2`), 26-30 October 2026. Docs 05, 06, 08 and 10 otherwise ran as written.
 
-| # | Symptom (exact error) | Cause | How I found it | Fix | Lesson |
-|---|---|---|---|---|---|
-| 1 | | | | | |
+| # | Doc | Symptom (what I saw) | Cause | How I found it | Fix | Lesson |
+|---|---|---|---|---|---|---|
+| 1 | 01 | Budget email recipient stuck at **Inactive**; **Send verification** said I had no permission for `notifications-contacts:*` | Since 30 September 2026 Budgets verifies new email recipients, and the project's managed SCP has a `DenyNotificationContactsOperations` statement | Matched the denied action to the SCP list on AWS's "SCPs and RCPs for projects" page | Sent the alerts through an SNS topic (`budget-alerts`) whose access policy lets only Budgets, for my account, publish; confirmed the subscription and sent a test message | A guardrail above the account can block a console button. Find another path (here SNS) instead of retrying |
+| 2 | 01 | The budget's real name came out with backticks around `lab-monthly-5usd` | I typed the backticks from the doc's code formatting | The name in the Budgets list | Left it (a budget can't be renamed); the doc now says to type the name without them | Copy values, not formatting |
+| 3 | 02 | `terraform plan` showed only `region`, then `No valid credential sources found` (`no EC2 IMDS role found`) | `$env:AWS_PROFILE` wasn't set in that PowerShell window, so Terraform fell through to the EC2 instance-role lookup | `~/.aws/config` and the `homelab` login were fine; only the window's setting was missing | `$env:AWS_PROFILE = 'harbor'` in each new window (doc 02's "every session" block) | An environment variable lasts one window. Check the credential chain before blaming the code |
+| 4 | 03 | Cost allocation tags page: *"This feature is only available in enterprise AWS"* | Activating cost allocation tags needs advanced features, which this lab doesn't turn on | The console message | Skipped it. The project holds only the lab, so Cost Explorer grouped by **Service** shows the lab's cost; the tags still work for the tagging API | Know what the account type can't do before planning around it |
+| 5 | 04 | First `apply` failed at `aws_autoscaling_group.app`; ASG activity: `Authentication Failure. Launching EC2 instance failed.`; the group was `tainted` | IAM eventual consistency: the ASG launched before the new instance profile had reached EC2 | **Auto Scaling group → Activity**: two failed launches, then two successful ones a minute later | `terraform untaint aws_autoscaling_group.app`, then `terraform plan` showed no changes | New IAM roles take a moment to propagate. Read the activity history before rebuilding |
+| 6 | 04, 06 | `Test-NetConnection <public-ip>` and `aws ssm start-session --target <instance-id>`, pasted as written, failed in PowerShell | `<` is a reserved operator in PowerShell, so the command never reached AWS | The error came from PowerShell, not from AWS | Docs 04, 06, 07 and 10 now look the value up into `$ip` / `$id` first; doc 05 builds `$url` from `terraform output` | Placeholders in copy-paste commands should be lookups, not angle brackets |
+| 7 | 07 | Policy simulator returned `explicitDeny` for **both** `s3:PutObject` and `s3:DeleteObject`, although the real upload from the server worked | The project SCP denies requests outside `ap-southeast-2` with an `aws:RequestedRegion` condition, and a simulated request has no Region unless you give it one | Full JSON output: no matched statement in the role's own policies, and `OrganizationsDecisionDetail.AllowedByOrganizations: false` | Added `--context-entries` with `aws:RequestedRegion=ap-southeast-2`: `allowed` / `implicitDeny`, as expected | An `explicitDeny` that matches nothing in the role's own policies points above the account. Check `OrganizationsDecisionDetail` before touching the role |
+| 8 | 09 | Health report: `[HIGH] Root user has no MFA`, exit code `1` | A new-experience project has no root sign-in, so `AccountMFAEnabled` is `0` | Doc 09's note on new-experience projects | Recorded as a known exception; no other HIGH findings with the lab up | A scanner finding needs context. Write accepted exceptions down instead of hiding them |
+| 9 | 09 | `can't open file '...\lab\scripts\test_cloud_health_report.py'` | I ran it from `lab/` instead of the repo root | The path in the error | `cd $HOME\aws-cloud-homelab` first | Read the path in the error message |
+
+## Adapting the guide to the new AWS experience
+
+The guide was first written for a classic Free Plan account in Singapore. My account turned out to be a **new AWS experience project**: one fixed Region, no root sign-in, no IAM users for people, and AWS-managed guardrails (SCPs). These are the changes I made to each doc so it matches what I actually saw.
+
+| Doc | Change | Why |
+|---|---|---|
+| All, Terraform | Region `ap-southeast-1` → `ap-southeast-2` (Sydney) everywhere; prices quoted for Sydney | A project builds only in its assigned Region; the SCP denies the others |
+| 00 | Current Free Tier terms (credits, 6 months); the account is closed in AWS Settings | Billing for projects lives in AWS Settings |
+| 01 | Rewritten: "Sign up for AWS (new)", confirm Region and account ID in AWS Settings, 2-step verification on the login instead of root MFA and an IAM admin user | Nobody can sign in as root, and people are invited as team members, not created in IAM |
+| 01 | CloudTrail `us-east-1` events read with `aws cloudtrail lookup-events --region us-east-1` | A project console has no Region selector |
+| 01 | Budget alerts through an SNS topic, plus a check that alerts can reach you | The SCP blocks email-recipient verification (problem 1) |
+| 02 | `aws login --profile homelab` through the project's `AccountFullAccessRole`; Terraform's `harbor` profile borrows it with `credential_process`; no access keys | The managed sign-in issues short-lived credentials (12 hours, renewed for up to 90 days) |
+| 02 | A leftover check after every `destroy` | Replaces the old teardown doc |
+| 03 | Skip cost allocation tags; group Cost Explorer by Service | Needs enterprise AWS (problem 4) |
+| 04 | `aws_iam_role_policy_attachments_exclusive` in `compute.tf`, plus a check that the role has only `AmazonSSMManagedInstanceCore` | A project may attach extra managed policies to new roles; Terraform now owns the full list |
+| 04-07, 10 | Instance IDs, IPs and the ALB URL looked up into `$id` / `$ip` / `$url` (doc 04's first session example keeps a sample ID) | Placeholders failed in PowerShell (problem 6) |
+| 07 | `--context-entries aws:RequestedRegion` on the policy simulator, with an explanation | The simulator also evaluates the project SCP (problem 7) |
+| 08 | AWS Chatbot → Amazon Q Developer in chat applications | Renamed service |
+| 09 | Root-MFA finding documented as expected | No root sign-in (problem 8) |
+| 10 | App Runner → ECS Express Mode as the managed option | App Runner closed to new customers on 30 April 2026 |
 
 ## Interview questions
 
@@ -78,4 +104,4 @@ _Fill this in as you go: symptom, the exact error text, how you found the cause,
 - **"What is configuration drift and how do you detect it?"** Real infrastructure no longer matching the code because someone changed it by hand. `terraform plan` shows it; AWS Config can alert on it.
 - **"How do you troubleshoot an instance you can't connect to?"** EC2 status checks, the serial console or instance screenshot, the system log, and whether SSM can reach it (role, network path).
 
-⬅️ [10 · Docker](10-docker.md) | ➡️ [12 · Break-fix tickets](12-break-fix-tickets.md)
+⬅️ [10 · Docker](10-docker.md)

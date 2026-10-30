@@ -127,7 +127,7 @@ resource "aws_launch_template" "app" {
   }
 
   # default_tags do not reach instances launched by an Auto Scaling group,
-  # so tag them here. Doc 13's leftover check depends on the Project tag.
+  # so tag them here. Doc 02's leftover check depends on the Project tag.
   tag_specifications {
     resource_type = "instance"
     tags          = local.instance_tags

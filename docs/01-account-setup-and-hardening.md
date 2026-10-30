@@ -102,7 +102,7 @@ If the option names differ from these steps, the goal stays the same: **a $5 mon
 
 ### 6. Turn on Cost Explorer
 
-**Billing and Cost Management** → **Cost Explorer** → open it once. The first visit enables it, and data can take up to 24 hours to appear. Doc 13 uses it for the final cost report.
+**Billing and Cost Management** → **Cost Explorer** → open it once. The first visit enables it, and data can take up to 24 hours to appear. Use it to see what the lab actually cost, grouped by **Service**.
 
 ### 7. Look at CloudTrail event history
 
@@ -130,7 +130,13 @@ In the console, click any event and read the **User name** and **Source IP addre
 | Alerts can reach you | Email recipient **Active**, or SNS → `budget-alerts` → Subscriptions | Active recipient, or a **Confirmed** email subscription on the topic attached to all 3 alerts |
 | Audit trail works | CloudTrail → Event history (Sydney), and the `lookup-events` command in step 7 after doc 02 | Your own events, and `CreateBudget` by your session |
 
-_My result: (add screenshots to `screenshots/01-*.png` after doing this)_
+**My output** (from my own account):
+
+![AWS Settings: project overview, Region ap-southeast-2](../screenshots/01-aws-settings-project-region.png)
+
+![CloudTrail event history in Sydney](../screenshots/01-cloudtrail-event-history.png)
+
+![Budget details](../screenshots/01-budget-details.png)
 
 ## Common mistakes
 

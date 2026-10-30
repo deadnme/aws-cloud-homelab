@@ -16,8 +16,8 @@ terraform {
 provider "aws" {
   region = var.region
 
-  # Every resource Terraform creates gets these tags. Doc 13 uses the
-  # Project tag to prove nothing was left running after teardown.
+  # Every resource Terraform creates gets these tags. Doc 02's leftover
+  # check uses the Project tag to prove nothing was left running.
   default_tags {
     tags = {
       Project   = "aws-cloud-homelab"

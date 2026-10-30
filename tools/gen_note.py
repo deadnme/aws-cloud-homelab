@@ -23,8 +23,7 @@ def read(rel):
 DOCS = ["00-what-is-aws", "01-account-setup-and-hardening", "02-workstation-tooling",
         "03-vpc-networking", "04-linux-on-ec2", "05-load-balancer-and-auto-scaling",
         "06-rds-postgresql", "07-s3-and-iam-roles", "08-cloudwatch-monitoring",
-        "09-automation-cloud-health-report", "10-docker", "11-troubleshooting-and-lessons",
-        "12-break-fix-tickets", "13-teardown-and-cost-report"]
+        "09-automation-cloud-health-report", "10-docker", "11-troubleshooting-and-lessons"]
 CODE = [("terraform/providers.tf", "hcl"), ("terraform/variables.tf", "hcl"),
         ("terraform/outputs.tf", "hcl"), ("terraform/network.tf", "hcl"),
         ("terraform/compute.tf", "hcl"), ("terraform/alb.tf", "hcl"),
@@ -34,13 +33,14 @@ CODE = [("terraform/providers.tf", "hcl"), ("terraform/variables.tf", "hcl"),
         ("scripts/cloud_health_report.py", "python"),
         ("scripts/test_cloud_health_report.py", "python"), (".gitignore", "gitignore"),
         (".github/workflows/terraform.yml", "yaml")]
-BREAKFIX = [("breakfix/break.ps1", "powershell"), ("breakfix/restore.ps1", "powershell")]
-
+IMG = re.compile(r"!\[[^\]]*\]\(\.\./screenshots/([^)]+)\)")
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 
 def links(line):
+    # Screenshots become Obsidian embeds: the repo sits inside the vault, so the file name resolves.
     # External links stay; relative and in-page links become their text.
+    line = IMG.sub(lambda m: f"![[{m.group(1)}]]", line)
     return LINK.sub(lambda m: m.group(0) if m.group(2).startswith("http") else m.group(1), line)
 
 
@@ -75,23 +75,13 @@ def callout(title, body, kind="example"):
     return "\n".join(lines)
 
 
-def split_spoilers(doc12):
-    """Return doc 12 without its answers section, and the answers as callouts."""
-    head, rest = doc12.split("## ⚠️ Spoilers: answers", 1)
-    nav = rest[rest.index("⬅️"):]
-    answers = re.findall(r"<details><summary>(.*?)</summary>\n(.*?)</details>", rest, re.S)
-    return head + nav, [callout(t, b) for t, b in answers]
-
-
 def main():
     readme = read("README.md")
     mermaid = readme[readme.index("```mermaid"):]
     mermaid = mermaid[:mermaid.index("\n\nWhy each part")]
-    titles, sections, spoilers = [], [], []
+    titles, sections = [], []
     for name in DOCS:
         text = read(f"docs/{name}.md")
-        if name.startswith("12-"):
-            text, spoilers = split_spoilers(text)
         titles.append(text.split("\n", 1)[0][2:])
         sections.append(transform(text))
 
@@ -109,10 +99,8 @@ def main():
     for rel, lang in CODE:
         code += [f"### `{rel}`", "", f"```{lang}", read(rel).rstrip("\n"), "```", ""]
 
-    bf = [callout(f"`{rel}`", f"```{lang}\n{read(rel).rstrip()}\n```") for rel, lang in BREAKFIX]
-
     toc = [f"- [[#{t}]]" for t in titles + ["Design decisions", "Appendix A - All code, in full",
-                                              "Appendix B - Glossary", "Spoilers - break-fix answers"]]
+                                              "Appendix B - Glossary"]]
     header = f"""---
 tags:
   - aws-cloud-homelab
@@ -120,7 +108,7 @@ tags:
 
 # AWS Cloud Homelab - Full Step-by-Step Guide
 
-The whole **Harbor Point client portal** AWS lab in one note: every doc in order, then every file of code in full, then the break-fix answers. Repo: `C:\\Users\\seano\\aws-cloud-homelab` (also linked under `Projects/AWS Cloud Homelab`), GitHub: https://github.com/deadnme/aws-cloud-homelab
+The whole **Harbor Point client portal** AWS lab in one note: every doc in order, then every file of code in full. Repo: `C:\\Users\\seano\\aws-cloud-homelab` (also linked under `Projects/AWS Cloud Homelab`), GitHub: https://github.com/deadnme/aws-cloud-homelab
 
 > [!note] How this guide is built
 > {NOTE}
@@ -133,18 +121,14 @@ The whole **Harbor Point client portal** AWS lab in one note: every doc in order
 """ + "\n".join(toc)
 
     body = [header] + sections + [dd, "\n".join(code).rstrip("\n"),
-                                  "## Appendix B - Glossary\n" + gloss + "\n\n---",
-                                  "## Spoilers - break-fix answers\n\n> [!warning] Spoilers\n"
-                                  "> Open an answer only after you've solved the ticket or given up. "
-                                  "The break scripts are here too, collapsed, because reading them gives the answer away.",
-                                  ] + spoilers + bf
+                                  "## Appendix B - Glossary\n" + gloss + "\n\n---"]
     out.write_text("\n\n".join(body) + "\n", encoding="utf-8", newline="\n")
 
 
-NOTE = ("Generated from the repo's docs and code. Regenerated 2026-10-26 for the new AWS experience "
-        "(Region `ap-southeast-2` Sydney, `aws login` through the project's managed role, current console "
-        "names). Nothing in it has been run against a real AWS account yet: \"Expected\" lines are what "
-        "should happen, not observed output. If the repo changes, the repo wins.")
+NOTE = ("Generated from the repo's docs and code, for the new AWS experience (Region `ap-southeast-2` "
+        "Sydney, `aws login` through the project's managed role). Docs 01-10 were run on my real project in "
+        "October 2026: the \"My output\" screenshots come from it, and doc 11 lists what actually broke. "
+        "If the repo changes, the repo wins.")
 WARN = ("Set up the budget alert (Phase 01) before building anything, run `terraform destroy` at the end of "
         "every session, and don't upgrade the plan or activate advanced AWS features (Organizations, IAM "
         "Identity Center): the upgrade can't be undone, and nothing in this lab needs them.")

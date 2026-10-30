@@ -67,7 +67,9 @@ Test-NetConnection $db -Port 5432   # fails from your laptop: private subnet, an
 ### Connect with psql from an app server
 
 ```powershell
-aws ssm start-session --target <instance-id>
+# instance IDs change on every rebuild, so look one up each session
+$id = aws ec2 describe-instances --filters "Name=tag:Name,Values=harbor-app" "Name=instance-state-name,Values=running" --query "Reservations[0].Instances[0].InstanceId" --output text
+aws ssm start-session --target $id
 ```
 
 ```bash
@@ -93,7 +95,15 @@ This is how a support engineer tests "can server X reach database Y": DNS first,
 | `psql` from an app server | Works, and `pg_stat_ssl` shows `ssl = t` |
 | **RDS console → harbor-db → Connectivity & security** | Publicly accessible: **No** |
 
-_My output: (paste the `/db` responses and the psql output here)_
+**My output** (from my own account):
+
+![/db through the load balancer: connected, 3 rows](../screenshots/06-db-from-alb.png)
+
+![The database endpoint resolves to a private address](../screenshots/06-db-private-dns.png)
+
+![Port 5432 blocked from my laptop](../screenshots/06-db-port-blocked-from-laptop.png)
+
+![psql from an app server over TLS 1.3](../screenshots/06-psql-from-app-server.png)
 
 ## Common mistakes
 

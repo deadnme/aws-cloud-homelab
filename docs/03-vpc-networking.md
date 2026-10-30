@@ -14,7 +14,7 @@ A VPC is the company's own isolated network inside AWS, like the `HarborNet` NAT
 | Subnets | Four `/24`s: public `10.20.1.0/24`, `10.20.2.0/24`; private `10.20.11.0/24`, `10.20.12.0/24` | One public and one private per AZ. Easy to read: 1x = public, 1x = private |
 | AZs | The first two available in `ap-southeast-2` | High availability needs at least two |
 | Internet access for private subnets | **None** (no NAT Gateway) | Only the database lives there, and it never needs the internet. Saves roughly $43/month |
-| Network ACLs | The VPC's default (allow all) | Security groups do the filtering. NACLs appear in a break-fix ticket (doc 12) |
+| Network ACLs | The VPC's default (allow all) | Security groups do the filtering |
 
 ### CIDR math you will be asked about
 
@@ -66,7 +66,7 @@ This costs nothing: VPCs, subnets, route tables and internet gateways are free. 
 
 ### Cost allocation tags (skip in a new-experience project)
 
-On a classic account you would now activate the `Project` tag: **Billing and Cost Management** → **Cost allocation tags** → `Project` → **Activate**, so Cost Explorer can filter spend by `Project=aws-cloud-homelab`. In a new-experience project the page says *"This feature is only available in enterprise AWS"*: it needs advanced features, which this lab doesn't activate (doc 01). **Skip it.** The project holds only the lab, so doc 13 groups Cost Explorer by **Service** instead. The tags still exist on every resource, and doc 13's leftover check reads them through the tagging API, which doesn't need activation.
+On a classic account you would now activate the `Project` tag: **Billing and Cost Management** → **Cost allocation tags** → `Project` → **Activate**, so Cost Explorer can filter spend by `Project=aws-cloud-homelab`. In a new-experience project the page says *"This feature is only available in enterprise AWS"*: it needs advanced features, which this lab doesn't activate (doc 01). **Skip it.** The project holds only the lab, so group Cost Explorer by **Service** instead. The tags still exist on every resource, and doc 02's leftover check reads them through the tagging API, which doesn't need activation.
 
 ## Verify it worked
 
@@ -82,9 +82,11 @@ aws ec2 describe-route-tables --filters "Name=tag:Name,Values=harbor-public-rt" 
 
 Expected: four subnets in two AZs, `MapPublicIpOnLaunch` true only for the public ones; the public route table shows `0.0.0.0/0` going to an `igw-…` ID.
 
-In the console: **VPC → Your VPCs → harbor-vpc → Resource map** draws subnets, route tables and the gateway with lines between them. Take a screenshot for `screenshots/03-resource-map.png`.
+In the console: **VPC → Your VPCs → harbor-vpc → Resource map** draws subnets, route tables and the gateway with lines between them.
 
-_My output: (paste the two tables here)_
+**My output** (from my own account):
+
+![Subnets across two AZs and the public route table](../screenshots/03-subnets-and-routes.png)
 
 ## Common mistakes
 

@@ -77,7 +77,7 @@ The diagram is in the [README](../README.md#architecture). The decisions below r
 - **Choice:** the app instances sit in the public subnets with public IPs. Only the database is private ([`network.tf`](../terraform/network.tf)).
 - **Considered:** private app subnets with a NAT Gateway; private app subnets with VPC endpoints.
 - **Why:** a NAT Gateway costs roughly $43/month in Sydney (about $0.06/hour), idle or not. That adds more than half again to the lab's roughly $0.10/hour, and one per AZ would about double it. VPC interface endpoints (SSM, CloudWatch Logs, CloudWatch metrics) are also billed per hour per AZ, and `pip` still needs a way out to PyPI. The security groups do the protecting: nothing from the internet reaches an instance except port 80 from the ALB, and there is no SSH.
-- **Trade-off:** instances have public IPs (about $0.005/hour each), and a mistake in a security group exposes them directly. Break-fix tickets practise exactly that kind of mistake.
+- **Trade-off:** instances have public IPs (about $0.005/hour each), and a mistake in a security group exposes them directly. Doc 04 checks from the internet that no port is open.
 - **Revisit when:** the portal holds real client data. Then: app servers in private subnets with a NAT Gateway per AZ, or endpoints plus a baked AMI so instances never need the internet.
 
 ## D-06 Two AZs, four /24 subnets

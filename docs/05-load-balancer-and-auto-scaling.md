@@ -71,7 +71,8 @@ aws elbv2 describe-target-health --target-group-arn $tg `
 Open a second PowerShell window and keep the site under watch:
 
 ```powershell
-$url = "<paste your alb_url>"
+cd $HOME\aws-cloud-homelab\lab
+$url = terraform output -raw alb_url
 while ($true) { $r = curl.exe -s -o NUL -w "%{http_code}" $url; "$(Get-Date -Format T)  $r"; Start-Sleep 2 }
 ```
 
@@ -83,7 +84,7 @@ $id = aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names ha
 aws autoscaling terminate-instance-in-auto-scaling-group --instance-id $id --no-should-decrement-desired-capacity
 ```
 
-This asks the ASG to remove the server, so it **deregisters and drains it first**, then terminates it and launches a replacement (desired capacity stays 2). Try `aws ec2 terminate-instances --instance-ids <id>` another time to see the difference: the instance just dies, and the ALB keeps sending it requests until two health checks fail (about 30 s), so the watch window may show a few `502`s. That's what a real crash looks like.
+This asks the ASG to remove the server, so it **deregisters and drains it first**, then terminates it and launches a replacement (desired capacity stays 2). Try `aws ec2 terminate-instances --instance-ids i-0123456789abcdef0` (with one of your real instance IDs) another time to see the difference: the instance just dies, and the ALB keeps sending it requests until two health checks fail (about 30 s), so the watch window may show a few `502`s. That's what a real crash looks like.
 
 Then watch:
 
@@ -95,7 +96,13 @@ aws autoscaling describe-scaling-activities --auto-scaling-group-name harbor-app
 
 Expected: the watch window keeps printing `200` the whole time (the other server carries the traffic). A few minutes later a new instance boots, runs the user data, passes two health checks and starts appearing in the "Served by" line.
 
-_My output: (paste the watch window around the termination, and the scaling activity table)_
+**My output** (from my own account):
+
+![Terminating a server through the ASG; the target drains first](../screenshots/05-asg-terminate-and-drain.png)
+
+![Scaling activities: drain, terminate, replacement launched](../screenshots/05-scaling-activities.png)
+
+![Watch window: HTTP 200 on every request during the swap](../screenshots/05-watch-window-all-200.png)
 
 ## Rolling updates (instance refresh)
 

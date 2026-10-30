@@ -61,7 +61,7 @@ Most AWS services have a counterpart in the Windows lab I already built. This is
 1. A budget alert exists before any resource does (doc 01).
 2. Every resource is tagged `Project=aws-cloud-homelab` by Terraform (`terraform/providers.tf`).
 3. Every session ends with `terraform destroy`.
-4. Doc 13 proves nothing was left behind and records the total cost.
+4. After `destroy`, a quick leftover check (doc 02) proves nothing billable is still running.
 
 ## The Well-Architected Framework
 

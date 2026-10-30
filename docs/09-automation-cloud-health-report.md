@@ -42,7 +42,7 @@ $LASTEXITCODE
 
 boto3 uses the same `harbor` profile as the CLI and Terraform (`credential_process`, doc 02).
 
-Run it twice: once with the full lab up, and once after `terraform destroy`. Expected with the lab up: INFO lines for the running instances, load balancer, RDS instance and volumes; **no** finding for `harbor-alb-sg` (port 80 to the world is the point of a public load balancer); no HIGH findings if docs 01-08 were followed. Expected after destroy: no INFO inventory lines. If something is still listed, doc 13's cleanup isn't finished.
+Run it twice: once with the full lab up, and once after `terraform destroy`. Expected with the lab up: INFO lines for the running instances, load balancer, RDS instance and volumes; **no** finding for `harbor-alb-sg` (port 80 to the world is the point of a public load balancer); no HIGH findings if docs 01-08 were followed. Expected after destroy: no INFO inventory lines. If something is still listed, `destroy` missed it: see doc 02's leftover check.
 
 > 🎓 **New-experience projects:** an AWS Builder ID owns the account and nobody can sign in as the root user, so it has no MFA device. If the report shows `[HIGH] Root user has no MFA` (exit code `1`), that's expected here: note it as a known exception in your write-up. On a classic account it is a real finding.
 
@@ -75,7 +75,13 @@ aws ec2 delete-security-group --group-id $sg
 | Bad SG test | HIGH finding for port 22, exit code 1 |
 | Report after `terraform destroy` | No inventory lines |
 
-_My output: (paste the report summary here, account ID masked)_
+**My output** (from my own account):
+
+![Health report self-test passing](../screenshots/09-self-test.png)
+
+![Health report with the lab up; the root MFA line is the known exception](../screenshots/09-report-lab-up.png)
+
+![The report catching a test security group open on port 22](../screenshots/09-report-open-sg.png)
 
 ## Common mistakes
 

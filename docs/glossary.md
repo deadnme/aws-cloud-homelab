@@ -34,7 +34,7 @@
 | **Least privilege** | Granting only the permissions a job needs (doc 07) |
 | **Multi-AZ (RDS)** | A synchronous standby database in another AZ with automatic failover (doc 06) |
 | **NAT Gateway** | Lets private-subnet resources reach the internet outbound. Paid per hour; not used in this lab (doc 03) |
-| **Network ACL (NACL)** | Stateless, ordered allow/deny rules on a subnet (doc 03, BF-3) |
+| **Network ACL (NACL)** | Stateless, ordered allow/deny rules on a subnet (doc 03) |
 | **Parameter Store** | Part of AWS Systems Manager: stores settings and secrets (`SecureString`) (doc 06) |
 | **Project** | In the new AWS experience: one AWS account plus its sharing settings, limited to one Region (doc 01) |
 | **RDS** | Relational Database Service: managed PostgreSQL, MySQL and others (doc 06) |

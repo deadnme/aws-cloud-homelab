@@ -104,11 +104,17 @@ git status --short                          # nothing from lab\ may appear
 git check-ignore -v lab/terraform.tfstate   # shows the .gitignore rule that hides it
 ```
 
-_My output: (paste the real `terraform apply` output and the `git check-ignore` line here after running them. Mask the account ID if you prefer.)_
+**My output** (from my own account):
+
+![winget installs Terraform and the Session Manager plugin](../screenshots/02-winget-terraform-ssm-plugin.png)
+
+![Terraform smoke test: plan and apply with 0 resources](../screenshots/02-terraform-smoke-test.png)
+
+![Terraform outputs and git check-ignore](../screenshots/02-terraform-outputs-gitignore.png)
 
 ### 7. Allow local scripts to run (Windows PowerShell 5.1)
 
-Windows PowerShell blocks `.ps1` files by default ("running scripts is disabled on this system"). Doc 12's break-fix scripts need this once:
+Windows PowerShell blocks `.ps1` files by default ("running scripts is disabled on this system"). Your own `.ps1` scripts (for example a scheduled copy of the doc 09 report) need this once:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
@@ -126,6 +132,20 @@ terraform apply                        # rebuilds everything you have copied in 
 # ... work ...
 terraform destroy                      # ALWAYS, before closing the laptop
 ```
+
+Then check nothing billable is left. Each command should print nothing (the tag lookup can lag a few minutes behind the deletions):
+
+```powershell
+aws resourcegroupstaggingapi get-resources --tag-filters Key=Project,Values=aws-cloud-homelab `
+  --query "ResourceTagMappingList[].ResourceARN" --output text
+aws ec2 describe-instances --filters "Name=instance-state-name,Values=pending,running,stopping,stopped" `
+  --query "Reservations[].Instances[].InstanceId" --output text
+aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerName" --output text
+aws rds describe-db-instances --query "DBInstances[].[DBInstanceIdentifier,DBInstanceStatus]" --output text
+aws logs describe-log-groups --log-group-name-prefix /harbor --query "logGroups[].logGroupName" --output text   # untagged, so the tag lookup misses it
+```
+
+If a `/harbor/...` log group survives `destroy` (for example after attaching AWS's managed `CloudWatchAgentServerPolicy` while experimenting), the next `apply` fails with `ResourceAlreadyExistsException`. Delete it with `aws logs delete-log-group --log-group-name /harbor/nginx/access` (and `/harbor/nginx/error`).
 
 After doc 08: every rebuild creates a **new** SNS email subscription. Click the new "Subscription Confirmation" email each session, or alarms go nowhere.
 

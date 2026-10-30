@@ -24,7 +24,9 @@ The user data script already copied `app.py` and this `Dockerfile` to `/opt/harb
 ## Build and run it on a lab server
 
 ```powershell
-aws ssm start-session --target <instance-id>
+# instance IDs change on every rebuild, so look one up each session
+$id = aws ec2 describe-instances --filters "Name=tag:Name,Values=harbor-app" "Name=instance-state-name,Values=running" --query "Reservations[0].Instances[0].InstanceId" --output text
+aws ssm start-session --target $id
 ```
 
 ```bash
@@ -78,7 +80,9 @@ Run the build again: every step says `CACHED` (or finishes instantly). Now edit 
 | `docker exec … id` | `uid=65534(nobody)` |
 | Rebuild after editing only `app.py` | Dependency layer cached |
 
-_My output: (paste `docker ps`, the curl lines and the `id` output here)_
+**My output** (from my own account):
+
+![Building and running the portal image on a lab server](../screenshots/10-docker-build-and-run.png)
 
 ## Common mistakes
 

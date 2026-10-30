@@ -37,7 +37,9 @@ Cost: a few kilobytes of backups, effectively $0.
 ## Run a backup
 
 ```powershell
-aws ssm start-session --target <instance-id>
+# instance IDs change on every rebuild, so look one up each session
+$id = aws ec2 describe-instances --filters "Name=tag:Name,Values=harbor-app" "Name=instance-state-name,Values=running" --query "Reservations[0].Instances[0].InstanceId" --output text
+aws ssm start-session --target $id
 ```
 
 ```bash
@@ -73,10 +75,13 @@ $role = "arn:aws:iam::$(aws sts get-caller-identity --query Account --output tex
 aws iam simulate-principal-policy --policy-source-arn $role `
   --action-names s3:PutObject s3:DeleteObject `
   --resource-arns "arn:aws:s3:::$bucket/db/x.sql.gz" `
+  --context-entries "ContextKeyName=aws:RequestedRegion,ContextKeyValues=ap-southeast-2,ContextKeyType=string" `
   --query "EvaluationResults[].[EvalActionName,EvalDecision]" --output table
 ```
 
 Expected: `s3:PutObject  allowed`, `s3:DeleteObject  implicitDeny`.
+
+> 💡 **Why `--context-entries`?** The simulator also checks the project's managed SCP, which denies requests outside the project's Region using the `aws:RequestedRegion` condition key. A simulated request has no Region unless you give it one, so without that line both actions come back `explicitDeny`, and `OrganizationsDecisionDetail.AllowedByOrganizations` is `false`. The real calls on the server were fine; only the simulation was missing context. Lesson: an `explicitDeny` that matches no statement in the role's own policies points at an SCP or other policy above the account. Check `OrganizationsDecisionDetail` before changing the role.
 
 ### Versioning in action (from the laptop)
 
@@ -94,7 +99,11 @@ aws s3api list-object-versions --bucket $bucket --prefix db/ --query "Versions[]
 | Policy simulator | PutObject allowed, DeleteObject implicitDeny |
 | **S3 console → bucket → Permissions** | Block all public access: **On** |
 
-_My output: (paste the backup line and the AccessDenied errors here)_
+**My output** (from my own account):
+
+![Policy simulator: explicitDeny without the Region context, then allowed / implicitDeny with it](../screenshots/07-policy-simulator.png)
+
+![Versioned backup object in S3](../screenshots/07-backup-versions.png)
 
 ## Common mistakes
 

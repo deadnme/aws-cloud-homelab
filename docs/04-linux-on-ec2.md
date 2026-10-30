@@ -102,7 +102,7 @@ id harbor                  # system user; the app does not run as root
 getent passwd harbor       # shell is /sbin/nologin
 
 # Resources
-df -h /                    # root disk usage (doc 12 fills this up)
+df -h /                    # root disk usage (the disk alarm in doc 08 watches this)
 free -m
 uptime
 
@@ -121,8 +121,9 @@ Practise the service basics while you're there: `systemctl restart harbor-app`, 
 From your laptop (PowerShell):
 
 ```powershell
-Test-NetConnection <public-ip> -Port 22    # TcpTestSucceeded : False
-Test-NetConnection <public-ip> -Port 80    # TcpTestSucceeded : False (no inbound rules yet; doc 05 adds the load balancer)
+$ip = aws ec2 describe-instances --filters "Name=tag:Name,Values=harbor-app" "Name=instance-state-name,Values=running" --query "Reservations[0].Instances[0].PublicIpAddress" --output text
+Test-NetConnection $ip -Port 22    # TcpTestSucceeded : False
+Test-NetConnection $ip -Port 80    # TcpTestSucceeded : False (no inbound rules yet; doc 05 adds the load balancer)
 ```
 
 The servers have public IPs only so they can reach the internet without a NAT Gateway. The security group still lets nothing in.
@@ -138,7 +139,11 @@ The servers have public IPs only so they can reach the internet without a NAT Ga
 | CloudTrail Event history (Sydney), event `StartSession` | Your `AccountFullAccessRole` session, with your IP |
 | `aws iam list-attached-role-policies --role-name harbor-app-role` | Only `AmazonSSMManagedInstanceCore` |
 
-_My output: (paste `systemctl status`, the IMDS lines and the `Test-NetConnection` results here)_
+**My output** (from my own account):
+
+![cloud-init finished and nginx running, from a Session Manager shell](../screenshots/04-cloud-init-and-services.png)
+
+![Ports 22 and 80 closed from the internet](../screenshots/04-no-open-ports.png)
 
 ## Common mistakes
 

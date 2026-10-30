@@ -77,7 +77,7 @@ fields @message
 aws cloudwatch set-alarm-state --alarm-name harbor-cpu-high --state-value ALARM --state-reason "Testing the alert path"
 ```
 
-An "ALARM: harbor-cpu-high" email arrives within a minute. The alarm returns to OK on its next evaluation (another email). Doc 12's tickets trigger the other alarms for real.
+An "ALARM: harbor-cpu-high" email arrives within a minute. The alarm returns to OK on its next evaluation (another email).
 
 ## Verify it worked
 
@@ -90,7 +90,13 @@ An "ALARM: harbor-cpu-high" email arrives within a minute. The alarm returns to 
 | Test alarm | ALARM email received, then OK |
 | All 4 alarms | State `OK` (or `Insufficient data` for disk until the agent reports) |
 
-_My output: (screenshot the dashboard to `screenshots/08-dashboard.png`, paste the alarm email subject here)_
+**My output** (from my own account):
+
+![Logs Insights: the 404 test requests](../screenshots/08-logs-insights-404s.png)
+
+![Logs Insights: hits by status and path](../screenshots/08-logs-insights-stats.png)
+
+![harbor-cpu-high alarm email](../screenshots/08-alarm-email.png)
 
 ## Common mistakes
 
@@ -110,6 +116,6 @@ _My output: (screenshot the dashboard to `screenshots/08-dashboard.png`, paste t
 - **"How would you find all 5xx errors from the last hour?"** CloudWatch Logs Insights on the access log group, filtering on the status field. For ALB-wide counts, the `HTTPCode_ELB_5XX_Count` / `HTTPCode_Target_5XX_Count` metrics.
 - **"CloudWatch vs CloudTrail?"** CloudWatch: performance metrics, logs and alarms ("how is it running?"). CloudTrail: API audit log ("who changed what?").
 - **"How do you get notified?"** Alarm → SNS topic → email, SMS, chat (via Amazon Q Developer in chat applications, formerly AWS Chatbot) or a ticketing system webhook.
-- **"How do you monitor what clients actually see?"** Health checks and 5xx alarms on the load balancer, plus synthetic checks from outside (CloudWatch Synthetics canaries). Internal metrics alone miss things like a broken security group in front of the site (ticket BF-1 in doc 12).
+- **"How do you monitor what clients actually see?"** Health checks and 5xx alarms on the load balancer, plus synthetic checks from outside (CloudWatch Synthetics canaries). Internal metrics alone miss things like a broken security group in front of the site.
 
 ⬅️ [07 · S3 and IAM roles](07-s3-and-iam-roles.md) | ➡️ [09 · Automation: cloud health report](09-automation-cloud-health-report.md)

@@ -2,7 +2,7 @@
 
 A hands-on AWS lab aimed at **junior cloud, cloud support and cloud operations roles in the Philippines.** The fictional **Harbor Point Accounting** (the same 20-person firm from my [Windows AD homelab](https://github.com/deadnme/windows-ad-homelab)) moves its client portal from an office server to AWS. I build it with Terraform, run it, break it on purpose, and fix it the way a cloud support engineer would.
 
-> **About this project:** this is a **learning lab**, not production experience. The guide, Terraform code and scripts were written with AI assistance (Claude). **I'm the one building it:** I set up the AWS account, type and run every command, troubleshoot what breaks, and work the break-fix tickets without looking at the answers. The docs only show output I actually saw in my own account. Sections marked _"My output"_ get filled in as I complete each module.
+> **About this project:** this is a **learning lab**, not production experience. The guide, Terraform code and scripts were written with AI assistance (Claude). **I'm the one building it:** I set up the AWS account, type and run every command, troubleshoot what breaks, and write up what I find. I built docs 01-10 on my own new-AWS-experience project in Sydney; the _"My output"_ screenshots in each doc are from that account, and doc 11 records the problems I actually hit.
 
 ## What employers ask for, and where it's covered
 
@@ -12,11 +12,11 @@ Before building, I reviewed entry-level and junior cloud postings in the Philipp
 |---|---|
 | AWS core services: EC2, VPC, IAM, S3, RDS, ELB, CloudWatch | Docs 03–08 |
 | Linux administration: services, logs, permissions | Doc 04 (Amazon Linux 2023, `systemd`, `journalctl`, nginx) |
-| Networking: subnets, routing, DNS, firewalls, troubleshooting tools | Doc 03, doc 11, break-fix tickets BF-1/2/3/7 |
+| Networking: subnets, routing, DNS, firewalls, troubleshooting tools | Docs 03, 06 and 11 (DNS, port and SG checks from both sides) |
 | Infrastructure as code (Terraform preferred) | [`terraform/`](terraform/), built up one file per doc |
 | Scripting (Bash / Python) | [`scripts/`](scripts/): first-boot Bash, backup script, `cloud_health_report.py` (doc 09) |
-| Monitoring, health checks, first-level troubleshooting | Docs 05, 08, 11 and eight break-fix tickets in doc 12 |
-| Cost and billing awareness | Docs 01 and 13: budget alerts, tagging, teardown proof, Cost Explorer report |
+| Monitoring, health checks, first-level troubleshooting | Docs 05, 08 and 11, including the real problems I hit and fixed |
+| Cost and billing awareness | Docs 01 and 02: budget alerts routed through SNS, tagging, `terraform destroy` plus a leftover check every session |
 | Docker basics | Doc 10 |
 | AWS Cloud Practitioner → Solutions Architect Associate | Interview questions at the end of every doc follow the CLF-C02 / SAA-C03 topics |
 
@@ -82,7 +82,7 @@ Why each part is built this way, what else was considered, and what production w
 1. A budget alert exists before any resource does (doc 01).
 2. Terraform tags every resource `Project=aws-cloud-homelab`.
 3. Every session ends with `terraform destroy`. With everything running, the lab costs roughly **$0.10/hour** of credits.
-4. Doc 13 proves nothing was left behind and records the real total from Cost Explorer.
+4. After `destroy`, a quick leftover check (doc 02) proves nothing billable is still running.
 
 ## Step-by-step documentation
 
@@ -91,19 +91,17 @@ Each page follows the same layout: **Goal → Why a company does this → What g
 | # | Page | You'll learn | Status |
 |---|---|---|---|
 | 00 | [What is AWS](docs/00-what-is-aws.md) | Regions, AZs, shared responsibility, billing, AD lab → AWS map | 📖 read |
-| 01 | [Account setup and hardening](docs/01-account-setup-and-hardening.md) | New AWS experience sign-up, Region, MFA, budget, CloudTrail | 📝 to run |
-| 02 | [Workstation tooling](docs/02-workstation-tooling.md) | AWS CLI, `aws login`, Terraform smoke test, the `lab/` folder | 📝 to run |
-| 03 | [VPC networking](docs/03-vpc-networking.md) | Subnets, route tables, internet gateway, SG vs NACL, CIDR math | 📝 to run |
-| 04 | [Linux on EC2](docs/04-linux-on-ec2.md) | User data, `systemd`, logs, IMDSv2, Session Manager instead of SSH | 📝 to run |
-| 05 | [Load balancer and Auto Scaling](docs/05-load-balancer-and-auto-scaling.md) | Health checks, SG chaining, self-healing, rolling updates | 📝 to run |
-| 06 | [RDS PostgreSQL](docs/06-rds-postgresql.md) | Private database, Parameter Store secrets, `psql` | 📝 to run |
-| 07 | [S3 and IAM roles](docs/07-s3-and-iam-roles.md) | Backups to S3, least privilege, AccessDenied, policy simulator | 📝 to run |
-| 08 | [CloudWatch monitoring](docs/08-cloudwatch-monitoring.md) | Agent, log groups, Logs Insights, alarms → email, dashboard | 📝 to run |
-| 09 | [Automation: cloud health report](docs/09-automation-cloud-health-report.md) | Python + boto3 account checks | 📝 to run |
-| 10 | [Docker](docs/10-docker.md) | Images, layers, containers; ECR/ECS/EKS | 📝 to run |
-| 11 | [Troubleshooting and lessons](docs/11-troubleshooting-and-lessons.md) | A repeatable method and toolkit; what broke for me | 📝 to run |
-| 12 | [Break-fix tickets](docs/12-break-fix-tickets.md) | Eight faults found and fixed from the ticket alone | 📝 to run |
-| 13 | [Teardown and cost report](docs/13-teardown-and-cost-report.md) | Proving nothing is left; the real total cost | 📝 to run |
+| 01 | [Account setup and hardening](docs/01-account-setup-and-hardening.md) | New AWS experience sign-up, Region, MFA, budget, CloudTrail | ✅ done |
+| 02 | [Workstation tooling](docs/02-workstation-tooling.md) | AWS CLI, `aws login`, Terraform smoke test, the `lab/` folder | ✅ done |
+| 03 | [VPC networking](docs/03-vpc-networking.md) | Subnets, route tables, internet gateway, SG vs NACL, CIDR math | ✅ done |
+| 04 | [Linux on EC2](docs/04-linux-on-ec2.md) | User data, `systemd`, logs, IMDSv2, Session Manager instead of SSH | ✅ done |
+| 05 | [Load balancer and Auto Scaling](docs/05-load-balancer-and-auto-scaling.md) | Health checks, SG chaining, self-healing, rolling updates | ✅ done |
+| 06 | [RDS PostgreSQL](docs/06-rds-postgresql.md) | Private database, Parameter Store secrets, `psql` | ✅ done |
+| 07 | [S3 and IAM roles](docs/07-s3-and-iam-roles.md) | Backups to S3, least privilege, AccessDenied, policy simulator | ✅ done |
+| 08 | [CloudWatch monitoring](docs/08-cloudwatch-monitoring.md) | Agent, log groups, Logs Insights, alarms → email, dashboard | ✅ done |
+| 09 | [Automation: cloud health report](docs/09-automation-cloud-health-report.md) | Python + boto3 account checks | ✅ done |
+| 10 | [Docker](docs/10-docker.md) | Images, layers, containers; ECR/ECS/EKS | ✅ done |
+| 11 | [Troubleshooting and lessons](docs/11-troubleshooting-and-lessons.md) | A repeatable method and toolkit; what broke for me | ✅ done |
 | – | [Design decisions](docs/design-decisions.md) | Why each part is built this way, the alternatives, and what production would change | 📖 read |
 | – | [Glossary](docs/glossary.md) | Every term in one place | 📖 read |
 
@@ -115,10 +113,9 @@ Each page follows the same layout: **Goal → Why a company does this → What g
 | `terraform/` | The finished lab: one root module, one file per doc (`network.tf`, `compute.tf`, `alb.tf`, `rds.tf`, `s3.tf`, `monitoring.tf`) |
 | `app/` | The portal (`app.py`, Python standard library + boto3 + psycopg) and its `Dockerfile` |
 | `scripts/` | `user-data.sh.tftpl` (first boot), `cloud_health_report.py` + its self-test |
-| `breakfix/` | `break.ps1` / `restore.ps1` for the doc 12 tickets (**spoilers**: don't read before solving) |
 | `tools/` | `gen_note.py`: rebuilds my single-page Obsidian copy of the guide from the docs and code |
 | `.github/workflows/terraform.yml` | `terraform fmt` and `validate` on every push. No AWS credentials in GitHub |
-| `screenshots/`, `media/` | Real screenshots and the demo video from my account |
+| `screenshots/` | Real screenshots from my account, also embedded in each doc |
 
 > ⚠️ Before every push: `git grep -nE "A(KI|SI)A[0-9A-Z]{16}|aws_secret_access_key *=|aws_session_token *="` must return nothing, and `git status` must not list any `.tfstate` file or `lab/`.
 
